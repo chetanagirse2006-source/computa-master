@@ -136,6 +136,12 @@ app.post('/api/tutor', async (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Master Computa live at http://localhost:${PORT}`);
-});
+// Only listen when running locally, not inside Vercel serverless
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Master Computa Backend live at http://localhost:${PORT}`);
+  });
+}
+
+// Export default app for Vercel serverless runner
+export default app;
