@@ -1,0 +1,71 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { GoogleGenAI } from '@google/genai';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Initialize Gemini Client
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+
+const MASTER_COMPUTA_SYSTEM_PROMPT = `
+You are Master Computa, an eccentric, affectionate, and brilliant computer science wizard-professor wearing a purple hat and glasses on a friendly CRT monitor face.
+Your goal is to teach undergraduate Operating Systems (OS) concepts to students using intuitive, visual candy/city metaphors first, followed by strict, exam-grade mathematical formulas and algorithm steps.
+
+Rules:
+1. Speak with warmth, enthusiasm, and wit. Use computer and magical terms ("By my silicon circuits!", "Great clock cycles!").
+2. When answering numericals (FCFS, SJF, SRTF, Round Robin, Banker's Algorithm, Page Replacement, Disk SSTF/SCAN), break down the equations step-by-step.
+3. Keep responses compact (under 120 words unless a full calculation is asked) so the client's text-to-speech engine can read it out cleanly.
+4. Always praise curiosity.
+`;
+
+app.post('/api/tutor', async (req, res) => {
+  const { question, currentLevelTitle, levelContext } = req.body;
+
+  if (!question) {
+    return res.status(400).json({ error: 'Question is required' });
+  }
+
+  try {
+    const userPrompt = `
+Context: The student is currently studying Level: "${currentLevelTitle || 'General OS'}".
+Curriculum context: "${levelContext || 'Operating System Concepts'}".
+
+Student Question: "${question}"
+`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: userPrompt,
+      config: {
+        systemInstruction: MASTER_COMPUTA_SYSTEM_PROMPT,
+        temperature: 0.7,
+        maxOutputTokens: 250,
+      }
+    });
+
+    res.json({ reply: response.text });
+  } catch (error) {
+    console.error('Gemini API Error:', error);
+    // Graceful offline fallback response
+    res.json({
+      reply: `By my static capacitors! My neural link experienced a glitch, but here is what you need to remember: in ${currentLevelTitle || 'Operating Systems'}, always verify Mutual Exclusion, keep Turnaround Time = Completion - Arrival, and check your invariants!`
+    });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Master Computa server live at http://localhost:${PORT}`);
+});

@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Computa: The OS Adventure</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FF85A2">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandYellow: '#FFD93D',
+                        brandBlue: '#329BFF',
+                        brandRed: '#FF5263',
+                        brandGreen: '#72E6B0',
+                        brandPurple: '#B79CFF',
+                        skyBg: '#DDF7FF',
+                        navyDark: '#26345C',
+                        candyPink: '#FF85A2',
+                        candyGold: '#FFAA00'
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif'],
+                    },
+                    keyframes: {
+                        float: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-8px)' } },
+                        wiggle: { '0%, 100%': { transform: 'rotate(-3deg)' }, '50%': { transform: 'rotate(3deg)' } },
+                        pulseGlow: { '0%, 100%': { boxShadow: '0 0 15px #FFD93D', transform: 'scale(1)' }, '50%': { boxShadow: '0 0 28px #FF5263', transform: 'scale(1.04)' } },
+                        bounceSoft: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-5px)' } }
+                    },
+                    animation: {
+                        float: 'float 3s ease-in-out infinite',
+                        wiggle: 'wiggle 0.8s ease-in-out infinite',
+                        pulseGlow: 'pulseGlow 1.8s infinite',
+                        bounceSoft: 'bounceSoft 1.5s infinite'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Nunito', sans-serif; background-color: #DDF7FF; color: #26345C; overflow-x: hidden; user-select: none; }
+        h1, h2, h3, h4, .brand-font { font-family: 'Fredoka', cursive; }
+        .custom-shadow { box-shadow: 0 8px 0 #1b2647; }
+        .custom-shadow-sm { box-shadow: 0 4px 0 #1b2647; }
+        .custom-btn { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+        .custom-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #1b2647 !important; }
+        .map-circuit-dash { stroke-dasharray: 14, 12; animation: mapDash 25s linear infinite; }
+        @keyframes mapDash { to { stroke-dashoffset: -1000; } }
+        .mouth-talking { animation: talkMouth 0.22s infinite alternate ease-in-out; transform-origin: 80px 108px; }
+        @keyframes talkMouth { 0% { transform: scaleY(0.7); } 100% { transform: scaleY(1.35); } }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #DDF7FF; }
+        ::-webkit-scrollbar-thumb { background: #329BFF; border-radius: 999px; }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between selection:bg-brandYellow selection:text-navyDark">
+
+    <!-- TOP CANDY STATUS BAR -->
+    <header class="sticky top-0 z-40 bg-gradient-to-r from-[#FF85A2] via-[#FFB3C6] to-[#FFD1DC] border-b-4 border-navyDark px-3 sm:px-6 py-2 shadow-lg flex items-center justify-between">
+        <div class="flex items-center space-x-2 sm:space-x-3 cursor-pointer" onclick="openProfileModal()">
+            <div class="relative">
+                <div id="playerAvatarDisplay" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white border-3 border-navyDark flex items-center justify-center text-2xl shadow-md">🤖</div>
+                <div class="absolute -bottom-1 -right-1 bg-brandYellow text-navyDark text-[10px] font-black px-1.5 py-0.2 rounded-full border border-navyDark" id="playerLevelBadge">Lv.1</div>
+            </div>
+            <div>
+                <div class="flex items-center space-x-1.5">
+                    <span id="playerNameDisplay" class="font-extrabold text-white text-sm sm:text-base drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">Student Alex</span>
+                    <span class="text-[10px] bg-white/90 text-navyDark px-2 py-0.5 rounded-full font-black hidden sm:inline" id="playerTrackBadge">B.Tech OS</span>
+                </div>
+                <div class="flex items-center space-x-1 text-xs font-black text-rose-800">
+                    <i class="fa-solid fa-heart text-red-500 animate-bounce"></i>
+                    <span id="playerLives">5 / 5 Full</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hidden md:flex flex-col items-center">
+            <div class="text-[11px] font-black text-navyDark uppercase tracking-wider">Semester Journey Progress</div>
+            <div class="w-44 bg-white/80 h-4 rounded-full border-2 border-navyDark overflow-hidden p-0.5 flex">
+                <div id="topProgressBar" class="h-full bg-gradient-to-r from-brandYellow to-brandGreen rounded-full transition-all duration-500" style="width: 25%;"></div>
+            </div>
+            <span class="text-[10px] font-black text-white drop-shadow" id="topProgressLabel">3 of 12 Levels Cleared</span>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-3 text-xs font-black">
+            <div class="flex items-center space-x-1 bg-amber-400 text-yellow-950 px-2.5 py-1.5 rounded-full border-2 border-navyDark shadow-sm">
+                <span class="text-base">🍫</span>
+                <span id="coinCount">480</span>
+            </div>
+            <div class="flex items-center space-x-1 bg-white text-brandBlue px-2.5 py-1.5 rounded-full border-2 border-navyDark shadow-sm">
+                <i class="fa-solid fa-bolt text-yellow-500"></i>
+                <span id="xpCount">1,850</span>
+            </div>
+            <button onclick="toggleUnlockAllLevels()" title="Unlock all 12 levels" class="px-2.5 py-1 bg-brandYellow hover:bg-amber-300 text-navyDark text-[11px] font-black rounded-xl border-2 border-navyDark custom-btn flex items-center space-x-1">
+                <i class="fa-solid fa-key text-xs"></i>
+                <span>Unlock All 12</span>
+            </button>
+            <button onclick="toggleSound()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 border-2 border-navyDark flex items-center justify-center text-navyDark custom-btn">
+                <i class="fa-solid fa-volume-high" id="soundIcon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- FLOATING MASTER COMPUTA AI WIDGET -->
+    <div id="masterComputaFloatingWidget" class="fixed left-3 bottom-20 z-40 flex flex-col items-center pointer-events-auto">
+        <div class="relative group cursor-pointer" onclick="toggleAITutorModal()">
+            <div id="computaQuickHint" class="hidden sm:block absolute -top-10 left-0 bg-white border-2 border-navyDark px-3 py-1 rounded-2xl shadow-md text-xs font-black whitespace-nowrap animate-bounceSoft text-navyDark">
+                Ask AI Master Computa! 💡
+            </div>
+            <div class="w-16 h-16 sm:w-18 sm:h-18 bg-brandYellow hover:bg-amber-300 rounded-3xl border-4 border-navyDark shadow-xl flex items-center justify-center custom-btn animate-float">
+                <svg viewBox="0 0 100 100" class="w-14 h-14">
+                    <polygon points="50,6 26,34 74,34" fill="#7C3AED" stroke="#26345C" stroke-width="3" />
+                    <ellipse cx="50" cy="34" rx="26" ry="6" fill="#9333EA" stroke="#26345C" stroke-width="3" />
+                    <circle cx="50" cy="18" r="4" fill="#FFD93D" />
+                    <rect x="15" y="34" width="70" height="48" rx="10" fill="#F8FAFC" stroke="#26345C" stroke-width="3.5" />
+                    <rect x="22" y="41" width="56" height="34" rx="6" fill="#38BDF8" stroke="#26345C" stroke-width="2" />
+                    <circle cx="38" cy="54" r="7" fill="#FFFFFF" stroke="#26345C" stroke-width="2" />
+                    <circle cx="39" cy="54" r="3.5" fill="#1E293B" />
+                    <circle cx="62" cy="54" r="7" fill="#FFFFFF" stroke="#26345C" stroke-width="2" />
+                    <circle cx="63" cy="54" r="3.5" fill="#1E293B" />
+                    <path d="M 45 54 Q 50 50 55 54" stroke="#26345C" stroke-width="2.5" fill="none" />
+                    <path d="M 38 67 Q 50 62 62 67 Q 50 74 38 67 Z" fill="#FFFFFF" stroke="#26345C" stroke-width="1.5" />
+                    <path d="M 10 82 L 90 82 L 82 92 L 18 92 Z" fill="#94A3B8" stroke="#26345C" stroke-width="3" />
+                </svg>
+            </div>
+        </div>
+        <span class="bg-navyDark text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full mt-1 border border-white tracking-widest shadow">AI AGENT</span>
+    </div>
+
+    <!-- MAIN APP SCREEN -->
+    <main id="appContainer" class="flex-1 relative overflow-y-auto w-full max-w-5xl mx-auto p-3 sm:p-5 pb-24">
+
+        <!-- VIEW 1: CANDY MAP (12 COMPLETE STAGES) -->
+        <div id="view-map" class="view-screen block">
+            <div class="text-center max-w-lg mx-auto mb-3">
+                <h1 class="text-3xl sm:text-4xl text-navyDark font-extrabold tracking-wide drop-shadow-sm flex items-center justify-center gap-2">
+                    <span>🍭</span> OS ADVENTURE MAP <span>💻</span>
+                </h1>
+                <p class="text-xs sm:text-sm font-bold text-navyDark/75">From Computer City to Autonomous RTOS across all 12 levels!</p>
+            </div>
+
+            <div class="relative w-full max-w-xl mx-auto bg-gradient-to-b from-[#bdeeff] via-[#d5f5ff] to-[#fff3c4] rounded-3xl border-4 border-navyDark p-4 sm:p-6 shadow-2xl overflow-hidden min-h-[1480px]">
+                <svg class="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 400 1480">
+                    <path class="map-circuit-dash" d="M 200 60 C 340 120, 340 220, 200 240 C 60 260, 60 360, 200 380 C 340 400, 340 500, 200 520 C 60 540, 60 640, 200 660 C 340 680, 340 780, 200 800 C 60 820, 60 920, 200 940 C 340 960, 340 1060, 200 1080 C 60 1100, 60 1200, 200 1220 C 340 1240, 340 1340, 200 1380" fill="none" stroke="#FF85A2" stroke-width="22" stroke-linecap="round" />
+                    <path d="M 200 60 C 340 120, 340 220, 200 240 C 60 260, 60 360, 200 380 C 340 400, 340 500, 200 520 C 60 540, 60 640, 200 660 C 340 680, 340 780, 200 800 C 60 820, 60 920, 200 940 C 340 960, 340 1060, 200 1080 C 60 1100, 60 1200, 200 1220 C 340 1240, 340 1340, 200 1380" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-dasharray="14 14" />
+                </svg>
+                <div id="mapNodesContainer" class="relative z-10 flex flex-col space-y-16 sm:space-y-20 pt-4"></div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: LESSON & LAB VIEW -->
+        <div id="view-level" class="view-screen hidden">
+            <div class="flex items-center justify-between mb-3">
+                <button onclick="switchView('view-map')" class="px-3.5 py-1.5 bg-white rounded-2xl border-2 border-navyDark font-extrabold text-xs sm:text-sm text-navyDark shadow hover:bg-slate-100 custom-btn flex items-center space-x-1.5">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Adventure Map</span>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-black bg-brandYellow border border-navyDark px-3 py-1 rounded-full text-navyDark" id="lessonCategoryBadge">Level 1</span>
+                    <span class="text-xs font-black bg-brandGreen text-navyDark px-2.5 py-1 rounded-full border border-navyDark">1,000 XP Stage</span>
+                </div>
+            </div>
+
+            <!-- MASTER COMPUTA ACTOR CARD -->
+            <div class="bg-white rounded-3xl border-4 border-navyDark p-4 sm:p-5 mb-4 shadow-xl">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                    <div class="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 relative">
+                        <svg viewBox="0 0 160 160" class="w-full h-full drop-shadow">
+                            <path d="M 45 42 L 80 5 L 115 42 Z" fill="#7C3AED" stroke="#26345C" stroke-width="4" />
+                            <ellipse cx="80" cy="42" rx="42" ry="9" fill="#9333EA" stroke="#26345C" stroke-width="4" />
+                            <polygon points="80,12 84,22 94,22 86,28 89,38 80,32 71,38 74,28 66,22 76,22" fill="#FFD93D" />
+                            <rect x="25" y="45" width="110" height="75" rx="14" fill="#F8FAFC" stroke="#26345C" stroke-width="4.5" />
+                            <rect x="35" y="55" width="90" height="55" rx="8" fill="#38BDF8" stroke="#26345C" stroke-width="3" />
+                            <circle cx="58" cy="78" r="10" fill="#FFFFFF" stroke="#26345C" stroke-width="3" />
+                            <circle cx="60" cy="78" r="5" fill="#1E293B" />
+                            <circle cx="102" cy="78" r="10" fill="#FFFFFF" stroke="#26345C" stroke-width="3" />
+                            <circle cx="104" cy="78" r="5" fill="#1E293B" />
+                            <path d="M 68 78 Q 80 72 92 78" stroke="#26345C" stroke-width="3.5" fill="none" />
+                            <path d="M 58 92 Q 80 88 102 92 Q 106 103 80 107 Q 54 103 58 92 Z" fill="#FFFFFF" stroke="#26345C" stroke-width="2" />
+                            <path id="computaActiveMouth" d="M 74 98 Q 80 102 86 98" stroke="#26345C" stroke-width="3.5" stroke-linecap="round" fill="none" />
+                            <path d="M 12 120 L 148 120 L 138 135 L 22 135 Z" fill="#94A3B8" stroke="#26345C" stroke-width="4" />
+                        </svg>
+                        <div id="mcStateBadge" class="absolute -bottom-1 left-1 bg-brandYellow text-[9px] font-black px-2 py-0.5 rounded-full border border-navyDark">EXPLAINING 💡</div>
+                    </div>
+
+                    <div class="flex-1 bg-skyBg border-3 border-navyDark rounded-2xl p-3 relative">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-extrabold text-brandBlue text-xs tracking-wider">MASTER COMPUTA:</span>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="speakCurrentDialogue()" class="text-xs bg-white text-navyDark px-2 py-0.5 rounded-full border border-navyDark font-black hover:bg-slate-100 flex items-center gap-1 custom-btn">
+                                    <i class="fa-solid fa-volume-high text-brandBlue"></i> Listen
+                                </button>
+                                <button onclick="stopSpeaking()" class="text-xs bg-white text-navyDark px-2 py-0.5 rounded-full border border-navyDark font-black hover:bg-slate-100 custom-btn">Stop</button>
+                            </div>
+                        </div>
+                        <p id="mcSpokenDialogue" class="text-navyDark font-bold text-xs sm:text-sm leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-3 border-t-2 border-slate-100">
+                    <div class="flex items-center justify-between text-[11px] font-black uppercase text-navyDark/70 mb-1">
+                        <span id="lessonStepLabel">Step 1 of 5</span>
+                        <span id="lessonStepXp">+200 XP</span>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2">
+                        <div id="stagePill-1" class="h-2.5 rounded-full bg-brandYellow border-2 border-navyDark"></div>
+                        <div id="stagePill-2" class="h-2.5 rounded-full bg-slate-200 border-2 border-navyDark"></div>
+                        <div id="stagePill-3" class="h-2.5 rounded-full bg-slate-200 border-2 border-navyDark"></div>
+                        <div id="stagePill-4" class="h-2.5 rounded-full bg-slate-200 border-2 border-navyDark"></div>
+                        <div id="stagePill-5" class="h-2.5 rounded-full bg-slate-200 border-2 border-navyDark"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DYNAMIC STAGE CONTAINER -->
+            <div id="lessonStageContainer" class="bg-white rounded-3xl border-4 border-navyDark p-4 sm:p-6 shadow-xl min-h-[460px]"></div>
+
+            <!-- NEXT DIVISION TRANSITION -->
+            <div id="nextDivisionSection" class="hidden mt-6 bg-gradient-to-r from-blue-100 via-indigo-50 to-pink-100 border-4 border-navyDark rounded-3xl p-5 shadow-2xl space-y-4">
+                <div class="flex items-center space-x-3">
+                    <span class="text-4xl animate-bounce">🚀</span>
+                    <div>
+                        <h3 class="text-xl font-extrabold text-navyDark">NEXT DIVISION: ADVANCED LABS & NEXT ADVENTURE</h3>
+                        <p class="text-xs font-bold text-navyDark/75">You cleared this level! Choose your next move below:</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button onclick="launchNextLevelDirectly()" class="p-3 bg-brandGreen hover:bg-emerald-300 rounded-2xl border-2 border-navyDark font-extrabold text-xs text-navyDark shadow flex flex-col items-center justify-center space-y-1 custom-btn">
+                        <span class="text-xl">⏩</span>
+                        <span>Next Level Adventure</span>
+                    </button>
+                    <button onclick="openSandboxMode()" class="p-3 bg-brandYellow hover:bg-amber-300 rounded-2xl border-2 border-navyDark font-extrabold text-xs text-navyDark shadow flex flex-col items-center justify-center space-y-1 custom-btn">
+                        <span class="text-xl">🧪</span>
+                        <span>Freeplay Algorithm Sandbox</span>
+                    </button>
+                    <button onclick="switchView('view-friends')" class="p-3 bg-brandBlue hover:bg-blue-600 rounded-2xl border-2 border-navyDark font-extrabold text-xs text-white shadow flex flex-col items-center justify-center space-y-1 custom-btn">
+                        <span class="text-xl">🤝</span>
+                        <span>Challenge Peer to Co-op Duel</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: LEARN (THEORY ACCORDIONS) -->
+        <div id="view-learn" class="view-screen hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-extrabold text-navyDark">OS THEORY REPOSITORY</h1>
+                <div class="bg-white border-2 border-navyDark rounded-xl p-1 flex">
+                    <button id="theoryModeStory" onclick="toggleTheoryMode('story')" class="px-3 py-1 rounded-lg font-black text-xs bg-brandYellow text-navyDark">🎈 Story</button>
+                    <button id="theoryModeCollege" onclick="toggleTheoryMode('college')" class="px-3 py-1 rounded-lg font-black text-xs text-navyDark/60">🎓 College</button>
+                </div>
+            </div>
+            <div id="theoryAccordionList" class="space-y-3"></div>
+        </div>
+
+        <!-- VIEW 4: TESTS (ARENA WITH EXCLUSIVE EXAM QUESTIONS) -->
+        <div id="view-tests" class="view-screen hidden">
+            <div class="text-center max-w-xl mx-auto mb-4">
+                <h1 class="text-2xl font-extrabold text-navyDark">OS EXAM ARENA</h1>
+                <p class="text-xs font-bold text-navyDark/70">Dedicated Semester Exam Sets (Different from Level Tests!)</p>
+            </div>
+            <div id="testExamContainer" class="hidden bg-white rounded-3xl border-4 border-navyDark p-5 shadow-2xl space-y-4 mb-4">
+                <!-- Live Exam Runner Interface -->
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="testsGridContainer"></div>
+        </div>
+
+        <!-- VIEW 5: FRIENDS -->
+        <div id="view-friends" class="view-screen hidden">
+            <div class="max-w-2xl mx-auto space-y-4">
+                <div class="bg-white rounded-3xl border-4 border-navyDark p-4 shadow">
+                    <h2 class="text-xl font-extrabold text-navyDark mb-1">CO-OP LAB SQUAD</h2>
+                    <div class="space-y-2 mt-3" id="friendsLeaderboardList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 6: SHOP -->
+        <div id="view-shop" class="view-screen hidden">
+            <div class="max-w-2xl mx-auto space-y-4">
+                <div class="flex items-center justify-between bg-white rounded-3xl border-4 border-navyDark p-4 shadow">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-navyDark">COMPUTA BOUTIQUE</h2>
+                        <p class="text-xs font-bold text-navyDark/60">Spend chocolates earned from tests!</p>
+                    </div>
+                    <div class="bg-amber-100 border-2 border-navyDark px-3 py-1 rounded-xl font-black text-sm text-yellow-900">
+                        🍫 <span id="shopCoinBadge">480</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="shopItemsGrid"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t-4 border-navyDark px-2 py-1.5 shadow-2xl">
+        <div class="max-w-md mx-auto flex items-center justify-around">
+            <button onclick="switchView('view-map')" id="nav-map" class="nav-btn active flex flex-col items-center text-brandBlue font-black text-xs">
+                <span class="text-xl">🗺️</span><span>MAP</span>
+            </button>
+            <button onclick="switchView('view-learn')" id="nav-learn" class="nav-btn flex flex-col items-center text-navyDark/60 font-black text-xs">
+                <span class="text-xl">📚</span><span>LEARN</span>
+            </button>
+            <button onclick="switchView('view-tests')" id="nav-tests" class="nav-btn flex flex-col items-center text-navyDark/60 font-black text-xs">
+                <span class="text-xl">🎯</span><span>TESTS</span>
+            </button>
+            <button onclick="switchView('view-friends')" id="nav-friends" class="nav-btn flex flex-col items-center text-navyDark/60 font-black text-xs">
+                <span class="text-xl">👥</span><span>SQUAD</span>
+            </button>
+            <button onclick="switchView('view-shop')" id="nav-shop" class="nav-btn flex flex-col items-center text-navyDark/60 font-black text-xs">
+                <span class="text-xl">🛍️</span><span>SHOP</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- AI TUTOR MODAL -->
+    <div id="aiTutorModal" class="fixed inset-0 z-50 bg-navyDark/60 backdrop-blur-sm hidden flex items-center justify-center p-3">
+        <div class="bg-white border-4 border-navyDark rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="bg-brandYellow border-b-4 border-navyDark p-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">🧙‍♂️</span>
+                    <div>
+                        <h3 class="font-extrabold text-navyDark text-sm">Ask Master Computa AI</h3>
+                        <p class="text-[10px] font-bold text-navyDark/70">OS Virtual Professor (100% Offline)</p>
+                    </div>
+                </div>
+                <button onclick="toggleAITutorModal()" class="w-7 h-7 rounded-full bg-white border-2 border-navyDark flex items-center justify-center font-black text-xs">✕</button>
+            </div>
+
+            <div id="tutorChatStream" class="flex-1 overflow-y-auto p-3 space-y-2.5 bg-skyBg/30 text-xs font-bold">
+                <div class="flex items-start space-x-2">
+                    <span class="text-xl">💻</span>
+                    <div class="bg-white border-2 border-navyDark p-2.5 rounded-2xl rounded-tl-none shadow-sm text-navyDark">
+                        "Greetings, young engineer! Ask me anything about CPU scheduling, Semaphores, Deadlocks, or Virtual Memory!"
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-2 bg-slate-50 border-t border-slate-200 flex gap-1.5 overflow-x-auto text-[11px] font-bold">
+                <button onclick="askPromptChip('Why does FIFO suffer from Belady\'s Anomaly?')" class="bg-white border border-navyDark px-2 py-0.5 rounded-full text-navyDark">Belady's Anomaly</button>
+                <button onclick="askPromptChip('How do I compute Turnaround and Waiting Time?')" class="bg-white border border-navyDark px-2 py-0.5 rounded-full text-navyDark">TAT & WT Formula</button>
+                <button onclick="askPromptChip('What is the difference between Mutex and Semaphore?')" class="bg-white border border-navyDark px-2 py-0.5 rounded-full text-navyDark">Mutex vs Semaphore</button>
+                <button onclick="askPromptChip('Explain the 4 Coffman conditions for Deadlock')" class="bg-white border border-navyDark px-2 py-0.5 rounded-full text-navyDark">4 Deadlock Rules</button>
+            </div>
+
+            <div class="p-2.5 bg-white border-t-2 border-navyDark flex items-center space-x-2">
+                <button id="micBtn" onclick="toggleVoiceSpeechInput()" class="w-9 h-9 rounded-xl bg-brandRed text-white border-2 border-navyDark flex items-center justify-center font-bold custom-btn">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <input type="text" id="tutorInput" onkeydown="if(event.key==='Enter') sendTutorQuestion()" placeholder="Ask your OS doubt..." class="flex-1 bg-skyBg border-2 border-navyDark rounded-xl px-3 py-1.5 font-bold text-navyDark text-xs focus:outline-none">
+                <button onclick="sendTutorQuestion()" class="w-9 h-9 rounded-xl bg-brandBlue text-white border-2 border-navyDark flex items-center justify-center font-bold custom-btn">
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL PREVIEW MODAL -->
+    <div id="levelPreviewModal" class="fixed inset-0 z-50 bg-navyDark/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white border-4 border-navyDark rounded-3xl max-w-sm w-full p-5 shadow-2xl relative text-center">
+            <button onclick="closeLevelPreview()" class="absolute top-3 right-3 w-7 h-7 rounded-full bg-slate-100 border-2 border-navyDark font-black text-xs">✕</button>
+            <div id="previewIcon" class="w-16 h-16 mx-auto rounded-2xl bg-brandYellow border-3 border-navyDark flex items-center justify-center text-3xl mb-2">🏙️</div>
+            <div class="text-[10px] font-black uppercase text-brandBlue" id="previewWorldLabel">World 1</div>
+            <h2 id="previewTitle" class="text-lg font-extrabold text-navyDark mb-1">Level 1</h2>
+            <p id="previewDesc" class="text-xs font-bold text-navyDark/75 mb-3 leading-relaxed"></p>
+            <button onclick="launchLevelFromPreview()" class="w-full py-2.5 bg-brandGreen hover:bg-emerald-400 text-navyDark font-extrabold text-sm rounded-xl border-2 border-navyDark custom-btn">
+                START ADVENTURE! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN ENGINE SCRIPT: 12 COMPLETE SIMULATIONS, 5 IN-LEVEL QUESTIONS & EXCLUSIVE ARENA TESTS -->
+    <script>
+        const APP_STATE = {
+            player: {
+                name: 'Student Alex',
+                avatar: '🤖',
+                track: 'B.Tech OS',
+                level: 1,
+                xp: 1850,
+                coins: 480,
+                unlockedLevels: [1, 2, 3],
+                completedLevels: [1, 2],
+                levelStars: { 1: 3, 2: 3 },
+                soundEnabled: true
+            },
+            currentLevelId: 1,
+            currentLessonStage: 1,
+            theoryMode: 'story',
+            speechSynth: window.speechSynthesis || null,
+            audioCtx: null
+        };
+
+        // IN-LEVEL SYLLABUS DATABASE: EXACTLY 5 FOCUSED QUESTIONS PER LEVEL
+        const LEVELS_DB = [
+            {
+                id: 1,
+                title: "Welcome to Computer City",
+                world: "World 1: OS Architecture",
+                icon: "🏙️",
+                desc: "Meet the OS Mayor organizing hardware, system calls, and ring protection!",
+                story: "In Computer City, applications are driving without traffic lights, crashing into RAM buildings and fighting over the CPU bridge. Master Computa steps in as the OS Mayor to schedule resources and manage system calls!",
+                college: "An Operating System is system software acting as an intermediary between computer hardware and user applications. Core duties: Process Management, Memory Management, File Systems, I/O Devices, and System Call Handling (POSIX). Dual Mode transitions: User Mode (Ring 3) to Kernel Mode (Ring 0) via traps/interrupts.",
+                algorithm: "Dual-Mode: User Process -> Trap/Syscall -> Mode bit flips to 0 (Kernel) -> Service Routine -> Mode bit flips to 1 (User) -> Return.",
+                questions: [
+                    { q: "What is the primary role of an Operating System?", options: ["To compile source code", "To act as an intermediary between user software and hardware", "To act purely as physical RAM", "To design CPU circuit solder"], ans: 1, exp: "The OS manages hardware resources and coordinates application execution." },
+                    { q: "What mechanism allows a user application to request OS kernel services?", options: ["System Call", "Bus Arbitration", "Direct Memory Access", "Overclocking"], ans: 0, exp: "System calls (e.g. fork, read, write) trigger software traps into kernel mode." },
+                    { q: "Which CPU mode bit transition occurs when a system call is made?", options: ["From Kernel to User", "From User to Kernel (bit 1 to 0)", "From Safe to Deadlock", "No bit change"], ans: 1, exp: "Mode bit switches to 0 (kernel) to grant access to privileged CPU instructions." },
+                    { q: "Which of the following is NOT a core task of the OS kernel?", options: ["Process scheduling", "Compiling high-level C++ code into machine binaries", "Virtual memory management", "I/O device arbitration"], ans: 1, exp: "Compilers are developer toolchain utilities, not runtime OS kernel services." },
+                    { q: "What hardware interrupt triggers when an illegal memory access occurs?", options: ["Trap / Exception", "Keyboard strobe", "Clock interrupt", "Direct bus grant"], ans: 0, exp: "A trap/software exception halts execution and triggers a segmentation fault handler." }
+                ]
+            },
+            {
+                id: 2,
+                title: "The Process Factory",
+                world: "World 2: Process Management",
+                icon: "🤖",
+                desc: "Worker robots moving through New, Ready, Running, Waiting, and Terminated bays.",
+                story: "Inside the Process Factory, robot workers carry instruction blueprints. Each robot carries a badge called a Process Control Block (PCB). When the CPU is occupied, they wait in line or take an I/O water break!",
+                college: "A Process is a program in execution consisting of Text (Code), Data (Globals), Heap (Dynamic Memory), and Stack (Local variables & Activation records). The 5-state lifecycle transitions: New -> Ready -> Running -> Waiting (Blocked on I/O) -> Terminated. Context Switch involves saving CPU registers to PCB1 and restoring PCB2.",
+                algorithm: "Context Switch Overhead: Save Regs(P1) -> Update PCB1 state -> Scheduler selects P2 -> Load Regs(P2) from PCB2 -> Switch Memory Map.",
+                questions: [
+                    { q: "What is the key difference between a Program and a Process?", options: ["A program is passive code on disk; a process is active code in execution", "A program is active; a process is passive", "A program contains a PCB", "There is no difference"], ans: 0, exp: "A program is a passive executable file; a process is active execution in RAM." },
+                    { q: "Which transition occurs when an executing process initiates an I/O request?", options: ["Ready to Running", "Running to Waiting", "Waiting to Terminated", "Running to Ready"], ans: 1, exp: "The process relinquishes the CPU and blocks in the Waiting queue for I/O completion." },
+                    { q: "What vital data structure holds PID, registers, priority, and memory pointers?", options: ["PCB (Process Control Block)", "TLB", "Inode", "Page frame"], ans: 0, exp: "The PCB stores complete state information for process preemption and restoration." },
+                    { q: "What is Context Switch Overhead?", options: ["Time CPU spends saving/restoring process states without performing user work", "Disk seek latency", "Paging anomaly", "Memory compaction"], ans: 0, exp: "Context switching is non-productive CPU overhead required for multitasking." },
+                    { q: "When I/O finishes for a blocked process, to which state does it move?", options: ["Running immediately", "Ready", "Terminated", "New"], ans: 1, exp: "It joins the Ready queue to await the CPU scheduler's dispatch." }
+                ]
+            },
+            {
+                id: 3,
+                title: "FCFS Racing Track",
+                world: "World 3: CPU Scheduling",
+                icon: "🏎️",
+                desc: "Racing cars compete on the CPU track with Gantt charts and waiting time calculations.",
+                story: "Process racing cars line up at the CPU speedway! In First-Come, First-Served (FCFS), whichever vehicle arrived first occupies the track until it finishes its laps, while others wait in the pit lane.",
+                college: "FCFS is non-preemptive. Turnaround Time (TAT) = Completion Time - Arrival Time. Waiting Time (WT) = TAT - Burst Time. FCFS suffers severely from the Convoy Effect: short jobs trapped behind a long CPU-bound process inflate the system's average waiting time.",
+                algorithm: "Order by Arrival Time AT. CT_i = max(CT_{i-1}, AT_i) + BT_i. TAT_i = CT_i - AT_i. WT_i = TAT_i - BT_i.",
+                questions: [
+                    { q: "What is the formula for Turnaround Time (TAT)?", options: ["Completion Time - Arrival Time", "Burst Time - Waiting Time", "Arrival Time + Burst Time", "Completion Time - Burst Time"], ans: 0, exp: "TAT measures the total duration elapsed from submission to completion." },
+                    { q: "What is the formula for Waiting Time (WT)?", options: ["TAT - Burst Time", "Completion Time + Arrival Time", "Burst Time / 2", "Arrival Time - Completion Time"], ans: 0, exp: "WT is the total time spent idle in the ready queue: TAT minus actual execution time." },
+                    { q: "Given P1(AT=0, BT=6) and P2(AT=0, BT=2), what is the Waiting Time of P2 under FCFS?", options: ["0 ms", "6 ms", "8 ms", "2 ms"], ans: 1, exp: "P1 runs from t=0 to 6. P2 arrived at 0 and waits until t=6. WT = 6 - 0 = 6 ms." },
+                    { q: "What is the Convoy Effect?", options: ["Short jobs waiting behind one long CPU-bound job, elevating average waiting time", "A network packet collision", "Memory paging error", "Deadlock cycle"], ans: 0, exp: "Convoy effect degrades CPU and I/O device utilization due to long blocking bursts." },
+                    { q: "Is basic FCFS preemptive or non-preemptive?", options: ["Non-preemptive", "Preemptive", "Both", "Depends on cache size"], ans: 0, exp: "Once allocated, the process holds the CPU until voluntary release or termination." }
+                ]
+            },
+            {
+                id: 4,
+                title: "The Shortest Job Challenge",
+                world: "World 3: CPU Scheduling",
+                icon: "⏱️",
+                desc: "SJF vs. Preemptive SRTF with preemption alerts and starvation warnings.",
+                story: "In the express lane, jobs with the shortest execution time run first! When a super-short job arrives while a longer job is halfway done, SRTF preempts the runner!",
+                college: "SJF minimizes Average Waiting Time. Preemptive SJF is SRTF (Shortest Remaining Time First). Drawback: Starvation of long processes if short jobs arrive continuously. Future CPU burst lengths must be estimated via exponential smoothing: tau_{n+1} = alpha * t_n + (1-alpha)*tau_n.",
+                algorithm: "SRTF: At each arrival/completion, select process with min remaining burst. If incoming job has shorter remaining time than current job, preempt immediately.",
+                questions: [
+                    { q: "Which CPU scheduling algorithm gives the theoretical minimum average waiting time?", options: ["FCFS", "Shortest Job First (SJF)", "Priority Scheduling", "Round Robin"], ans: 1, exp: "SJF is mathematically optimal for minimizing average waiting time for stationary sets." },
+                    { q: "What is preemptive Shortest Job First commonly called?", options: ["SRTF (Shortest Remaining Time First)", "FCFS", "Multilevel Queue", "SCAN"], ans: 0, exp: "SRTF preempts the executing job whenever a new arrival with a shorter burst appears." },
+                    { q: "What major danger do long processes face in an SJF/SRTF system?", options: ["Starvation (Indefinite Blocking)", "Convoy effect", "Thrashing", "Deadlock"], ans: 0, exp: "A steady influx of short processes can starve long-running jobs indefinitely." },
+                    { q: "What formula estimates future burst lengths using past history in SJF?", options: ["Exponential Smoothing: tau_{n+1} = alpha * t_n + (1-alpha)*tau_n", "Banker's Safety Formula", "Belady's Anomaly", "Amdahl's Law"], ans: 0, exp: "Exponential averaging blends recent burst observations with historical predictions." },
+                    { q: "If P1 has 5ms remaining, and P2 arrives with burst 2ms, what does SRTF do?", options: ["Preempts P1 and switches to P2", "Finishes P1 first", "Terminates P2", "Runs both in parallel on 1 core"], ans: 0, exp: "Since P2's remaining time (2ms) is strictly less than P1's (5ms), P1 is preempted." }
+                ]
+            },
+            {
+                id: 5,
+                title: "Round Robin and Priority Arena",
+                world: "World 3: CPU Scheduling",
+                icon: "🔄",
+                desc: "Time quanta rotation, priority scheduling, and aging to eliminate starvation.",
+                story: "Robots share the supercharger! A timer rings every 2 seconds (quantum q). When it rings, the robot steps down and goes to the back of the queue so everyone gets a fair turn!",
+                college: "Round Robin (RR) is built for timesharing systems. Ready processes receive CPU time slices (quantum q, typically 10-100ms). If q -> infinity, RR degenerates to FCFS. If q is minuscule, context switch overhead dominates. Priority scheduling executes highest priority first; Aging mitigates starvation.",
+                algorithm: "RR Queue: Head process runs for min(Remaining_BT, q). If unfinished, re-enqueue at tail. Aging: Priority_i = Priority_i + 1 for each wait interval.",
+                questions: [
+                    { q: "What occurs if the Round Robin time quantum (q) is set excessively large?", options: ["It degenerates into FCFS scheduling", "It becomes SJF", "It causes deadlock", "Context switching increases to 100%"], ans: 0, exp: "If quantum exceeds burst lengths, processes finish in arrival order without preemption." },
+                    { q: "What happens if the time quantum is chosen to be extremely small (e.g. 10 microseconds)?", options: ["Excessive context switching overhead destroys CPU throughput", "Processes run faster", "Starvation occurs", "Belady's anomaly occurs"], ans: 0, exp: "CPU spends most cycles swapping register states rather than advancing user instructions." },
+                    { q: "What technique systematically solves indefinite starvation in priority schedulers?", options: ["Aging", "Compaction", "Paging", "Polling"], ans: 0, exp: "Aging incrementally raises the priority of older queued jobs over time." },
+                    { q: "A process with burst 11ms runs with quantum q=4ms. How many time slices does it take?", options: ["3 slices (4ms, 4ms, 3ms)", "1 slice", "11 slices", "2 slices"], ans: 0, exp: "Slices: Slice 1 (4ms, 7 left), Slice 2 (4ms, 3 left), Slice 3 (3ms, finished)." },
+                    { q: "What is Priority Inversion?", options: ["A low-priority process holds a lock needed by a high-priority process, blocking it", "CPU speed reversing", "Aging failing", "Context switch delay"], ans: 0, exp: "Solved by Priority Inheritance protocol, where lock holder inherits higher priority." }
+                ]
+            },
+            {
+                id: 6,
+                title: "Synchronization Playground",
+                world: "World 4: Synchronization",
+                icon: "🚥",
+                desc: "Race conditions, critical sections, and mutex locks protecting shared memory.",
+                story: "Two robots, Bolt and Sparky, increment a shared score counter simultaneously. Without a lock, they overwrite each other's increments! A Mutex key ensures only one robot touches the counter at any instant.",
+                college: "A Race Condition arises when concurrent threads access shared state and the final result depends on execution order. Critical Section requirements: 1. Mutual Exclusion, 2. Progress, 3. Bounded Waiting. Solutions include Peterson's Algorithm, Hardware TestAndSet/CAS, Mutexes, and Semaphores.",
+                algorithm: "Mutex: acquire() { while (!available); available = false; } release() { available = true; }",
+                questions: [
+                    { q: "What defines a Race Condition?", options: ["Concurrent processes manipulate shared data where outcome depends on execution timing", "A competition between CPU clock and RAM", "Car racing simulator", "Cache line fault"], ans: 0, exp: "Without proper synchronization, interleaving produces corrupted data." },
+                    { q: "Which of the following is NOT a formal requirement for the Critical Section problem?", options: ["Unlimited Execution Speed", "Mutual Exclusion", "Progress", "Bounded Waiting"], ans: 0, exp: "The three mandatory criteria are Mutual Exclusion, Progress, and Bounded Waiting." },
+                    { q: "What atomic operations govern Dijkstra's counting semaphore?", options: ["wait() [P] and signal() [V]", "push() and pop()", "fork() and exec()", "read() and write()"], ans: 0, exp: "wait() decrements/blocks; signal() increments/unblocks." },
+                    { q: "What is a Spinlock?", options: ["A lock where waiting processes repeatedly loop testing the lock bit (Busy Waiting)", "A disk platter rotation", "A thread priority", "A virtual memory page"], ans: 0, exp: "Spinlocks avoid context switch overhead but consume CPU cycles while waiting." },
+                    { q: "What is the key difference between a Binary Semaphore and a Mutex?", options: ["A Mutex enforces ownership (only the lock owner can unlock it); semaphores can be signaled by any thread", "They are identical in every way", "Semaphores cannot block", "Mutexes have no variables"], ans: 0, exp: "Mutex locks have ownership semantics, making them suitable for mutual exclusion." }
+                ]
+            },
+            {
+                id: 7,
+                title: "Classic Synchronization Park",
+                world: "World 4: Synchronization",
+                icon: "🍽️",
+                desc: "Producer-Consumer bounded buffers, Readers-Writers, and Dining Philosophers.",
+                story: "Welcome to the synchronization theme park! Manage chef robots baking pies into a bounded conveyor buffer, bookworms reading archives, and hungry philosophers sharing forks!",
+                college: "Classic Synchronization: 1. Bounded-Buffer (Producer-Consumer uses mutex, empty=N, full=0). 2. Readers-Writers (Writers have exclusive lock; multiple Readers share concurrent read lock). 3. Dining Philosophers (Circular wait deadlocks if all grab left forks; broken by asymmetric fork picking).",
+                algorithm: "Producer: wait(empty); wait(mutex); put(); signal(mutex); signal(full). Consumer: wait(full); wait(mutex); take(); signal(mutex); signal(empty).",
+                questions: [
+                    { q: "In Producer-Consumer, what prevents writing into an already full buffer?", options: ["The 'empty' semaphore reaching 0 and blocking the producer", "The 'full' semaphore reaching N", "The disk head", "Belady's anomaly"], ans: 0, exp: "Producer executes wait(empty). When empty slots reach 0, producer blocks." },
+                    { q: "In Dining Philosophers, what happens if all 5 philosophers pick their left fork simultaneously?", options: ["Circular Wait Deadlock occurs", "Everyone eats happily", "Forks multiply", "Throughput doubles"], ans: 0, exp: "Each philosopher holds one fork and waits indefinitely for the neighbor's fork." },
+                    { q: "How can Dining Philosophers deadlock be eliminated?", options: ["Make odd philosophers pick left-then-right, and even pick right-then-left (Asymmetric Picking)", "Add more spaghetti", "Make them eat with spoons", "Disable the CPU"], ans: 0, exp: "Asymmetry breaks the circular wait condition necessary for deadlock." },
+                    { q: "In the First Readers-Writers problem, who is prone to starvation?", options: ["Writers", "Readers", "The operating system", "Disk cache"], ans: 0, exp: "Continuous arriving readers keep the read count above 0, starving writers." },
+                    { q: "What synchronization construct encapsulates shared data and synchronization procedures inside an object?", options: ["Monitor", "Counting semaphore", "Spinlock", "Inode table"], ans: 0, exp: "Monitors provide language-level mutual exclusion with condition variables." }
+                ]
+            },
+            {
+                id: 8,
+                title: "Deadlock Dungeon",
+                world: "World 5: Deadlock",
+                icon: "🔒",
+                desc: "Resource Allocation Graphs (RAG), 4 Coffman conditions, and cycle detection.",
+                story: "In the dungeon, Robot Alpha holds the red key and needs the blue wand. Robot Beta holds the blue wand and needs the red key. Both are frozen in deadlock!",
+                college: "Deadlock is a state where every process in a set is waiting for an event only another process in the set can cause. 4 Coffman Conditions: 1. Mutual Exclusion, 2. Hold and Wait, 3. No Preemption, 4. Circular Wait. Resource Allocation Graphs (RAG): single-instance resource cycles strictly imply deadlock.",
+                algorithm: "RAG: Request edge P_i -> R_j. Assignment edge R_j -> P_i. If single-instance resources and cycle exists -> Deadlock confirmed.",
+                questions: [
+                    { q: "Which of the following is NOT one of the 4 Coffman conditions for deadlock?", options: ["Preemption Allowed", "Mutual Exclusion", "Hold and Wait", "Circular Wait"], ans: 0, exp: "The condition is NO Preemption. If preemption is allowed, deadlock is averted." },
+                    { q: "In a RAG with SINGLE-INSTANCE resource types, what does a cycle indicate?", options: ["A definite deadlock exists", "High throughput", "Transient race condition", "Memory leak"], ans: 0, exp: "For single-instance systems, a cycle is a necessary and sufficient condition for deadlock." },
+                    { q: "What does an edge from Process P to Resource R (P -> R) represent in a RAG?", options: ["Request Edge (P is waiting for R)", "Assignment Edge (R is assigned to P)", "Claim Edge", "Termination Edge"], ans: 0, exp: "A directed edge from process to resource indicates a pending resource request." },
+                    { q: "How can the 'Circular Wait' condition be eliminated in an operating system?", options: ["Impose a strict global ordering of all resource types and require ascending acquisition", "Allocate infinite RAM", "Disable all threads", "Reboot periodically"], ans: 0, exp: "Resource ordering mathematically prevents closed cycles from forming." },
+                    { q: "What is a Wait-For Graph?", options: ["A compressed RAG where resources are collapsed and edges go directly from Process to Process", "A timeline bar", "A Gantt chart", "A memory map"], ans: 0, exp: "Obtained by removing resource nodes from single-instance RAGs to test for cycles." }
+                ]
+            },
+            {
+                id: 9,
+                title: "Banker's Algorithm Vault",
+                world: "World 5: Deadlock",
+                icon: "🏦",
+                desc: "Allocation, Max, and Need matrices with live Safe Sequence validation.",
+                story: "Master Computa manages the computer vault. Before lending resource tokens to robots, he checks if all processes can eventually finish safely!",
+                college: "Banker's Algorithm (Dijkstra) avoids deadlock by simulating maximum resource claims prior to granting requests. Matrices: Allocation[n][m], Max[n][m], Need[n][m] = Max - Allocation, Available[m]. A state is Safe if a Safe Sequence <P1, P2, ... Pn> exists where each Need_i <= Work.",
+                algorithm: "Safety: Work = Available, Finish[i] = false. Find i where Finish[i]==false and Need_i <= Work. Work += Allocation_i; Finish[i]=true; append Pi. Repeat.",
+                questions: [
+                    { q: "How is the Need matrix calculated in Banker's Algorithm?", options: ["Need = Max - Allocation", "Need = Max + Allocation", "Need = Available - Allocation", "Need = Max / 2"], ans: 0, exp: "Need represents the remaining resources each process may request before exiting." },
+                    { q: "What defines a 'Safe State' in Banker's Algorithm?", options: ["A state where at least one execution sequence allows all processes to finish without deadlock", "Zero CPU usage", "No RAM allocated", "All processes blocked"], ans: 0, exp: "A safe sequence guarantees all processes can satisfy maximum demands." },
+                    { q: "Is an 'Unsafe State' always deadlocked?", options: ["No, but it has the potential to lead to deadlock if processes request maximums", "Yes, immediately deadlocked", "Only on 32-bit systems", "Yes, all data is lost"], ans: 0, exp: "An unsafe state is not deadlocked yet, but safety can no longer be guaranteed." },
+                    { q: "Available=[3, 3, 2]. P1 has Need=[1, 2, 2] and Alloc=[2, 0, 0]. Can P1 run? What is new Work?", options: ["Yes, new Work = [3+2, 3+0, 2+0] = [5, 3, 2]", "No, cannot satisfy", "Yes, new Work = [0, 0, 0]", "Deadlock occurs"], ans: 0, exp: "Need [1,2,2] <= Available [3,3,2]. Upon completion, P1 returns its Allocation [2,0,0]." },
+                    { q: "Why is Banker's Algorithm rarely implemented in general-purpose OSes like Linux?", options: ["Processes cannot know their maximum resource claims in advance", "It is mathematically flawed", "It causes Belady's anomaly", "It uses too much disk"], ans: 0, exp: "Dynamic applications cannot predict peak resource requirements at startup." }
+                ]
+            },
+            {
+                id: 10,
+                title: "Memory Allocation Kingdom",
+                world: "World 6: Memory Management",
+                icon: "📦",
+                desc: "First Fit, Best Fit, Worst Fit, and fragmentation calculations.",
+                story: "Process boxes need rooms in the Memory Hotel! First Fit takes the first room big enough. Best Fit takes the closest fit. Worst Fit takes the largest room!",
+                college: "Contiguous Allocation strategies: 1. First Fit (first hole with size >= request), 2. Best Fit (smallest hole >= request, produces smallest leftover fragment), 3. Worst Fit (largest hole >= request). Internal Fragmentation: unused memory inside an allocated partition. External Fragmentation: total free memory satisfies request, but is non-contiguous.",
+                algorithm: "First Fit: scan from 0, pick first size >= req. Best Fit: min(size - req >= 0). Worst Fit: max(size - req).",
+                questions: [
+                    { q: "Which memory allocation strategy chooses the hole leaving the smallest leftover remainder?", options: ["Best Fit", "First Fit", "Worst Fit", "Next Fit"], ans: 0, exp: "Best Fit allocates the partition closest in size to the requested block." },
+                    { q: "What is External Fragmentation?", options: ["Total free memory exists to satisfy a request, but it is split into non-contiguous holes", "Unused space inside an allocated block", "A damaged RAM module", "Disk platter damage"], ans: 0, exp: "Scattered free holes cannot satisfy a large contiguous allocation request." },
+                    { q: "What technique shuffles memory contents to consolidate free holes into one contiguous block?", options: ["Compaction", "Aging", "Paging", "Context switching"], ans: 0, exp: "Compaction relocates processes dynamically to merge scattered free space." },
+                    { q: "Given holes [100K, 500K, 200K, 300K], where does First Fit place a 212K request?", options: ["In 500K (the first hole >= 212K)", "In 100K", "In 300K", "In 200K"], ans: 0, exp: "First Fit checks sequentially: 100K (no), 500K (yes, fits!). " },
+                    { q: "How does modern Paging completely eliminate External Fragmentation?", options: ["By allocating physical memory in fixed-size frames and mapping non-contiguous frames to contiguous logical pages", "By eliminating RAM", "By compaction", "By single-tasking"], ans: 0, exp: "Any free physical frame can be assigned to any logical page." }
+                ]
+            },
+            {
+                id: 11,
+                title: "The Virtual Memory Portal",
+                world: "World 7: Virtual Memory",
+                icon: "🌀",
+                desc: "FIFO, LRU, Optimal page replacement, Belady's anomaly, and page fault handling.",
+                story: "Page characters travel between the virtual library and physical RAM! When RAM is full, the replacement algorithm evicts a page to make room.",
+                college: "Virtual Memory decouples logical addresses from physical RAM. Page tables translate pages to frames; valid-invalid bit 0 triggers a Page Fault interrupt. Algorithms: 1. FIFO (subject to Belady's Anomaly where more frames can yield more faults), 2. LRU (replaces least recently used page), 3. Optimal (benchmark replacing page not needed for longest future).",
+                algorithm: "Fault Rate = Faults / References. Optimal Victim = max_{p in Frames}(next_use(p)).",
+                questions: [
+                    { q: "What is Belady's Anomaly?", options: ["For FIFO replacement, allocating MORE page frames can sometimes cause MORE page faults", "More frames always mean fewer faults", "The CPU halting", "RAM clock desync"], ans: 0, exp: "Belady's Anomaly proves FIFO is not a stack algorithm; more capacity can worsen faults." },
+                    { q: "Which page replacement algorithm looks into the future and serves as the optimal benchmark?", options: ["Optimal (OPT)", "FIFO", "LRU", "Clock"], ans: 0, exp: "OPT guarantees lowest possible faults by evicting the page unneeded for the longest future." },
+                    { q: "What hardware component accelerates virtual-to-physical address translation?", options: ["TLB (Translation Lookaside Buffer)", "ALU", "Southbridge", "GPU VRAM"], ans: 0, exp: "The TLB is a high-speed associative hardware cache for page table mappings." },
+                    { q: "What occurs during a Page Fault?", options: ["The referenced page is not in physical RAM, triggering an OS trap to fetch it from disk", "A damaged RAM chip", "CPU overheats", "Application compiles"], ans: 0, exp: "The OS handles the page fault interrupt by reading the missing page from swap into a free frame." },
+                    { q: "For reference string 1, 2, 3, 1 with 3 empty frames, what is the fault/hit result?", options: ["3 Faults, 1 Hit", "4 Faults", "4 Hits", "2 Faults, 2 Hits"], ans: 0, exp: "Pages 1, 2, 3 trigger 3 cold faults; second request for 1 is an immediate Hit." }
+                ]
+            },
+            {
+                id: 12,
+                title: "Files, Disks & Real-Time Robot City",
+                world: "World 8: Storage & RTOS",
+                icon: "🚗",
+                desc: "Disk scheduling (SSTF, SCAN) and Hard vs. Soft real-time autonomous vehicle deadlines.",
+                story: "An autonomous robot car navigates the city! It must scan disk sectors for map data (SSTF/SCAN) while guaranteeing Hard Real-Time emergency braking before sensor deadlines expire!",
+                college: "Disk Scheduling minimizes seek time: 1. FCFS, 2. SSTF (Shortest Seek Time First - starvation risk for outer cylinders), 3. SCAN (Elevator algorithm sweeps back and forth), 4. C-SCAN (unidirectional sweep). Real-Time OS (RTOS): Hard RTOS guarantees deterministic deadline adherence (failure = catastrophe, e.g. Autonomous Car Braking, Pacemakers); Soft RTOS tolerates occasional deadline misses.",
+                algorithm: "SSTF: at track T, select min |T - Request_i|. Total Head Movement sum proportional to seek time.",
+                questions: [
+                    { q: "What distinguishes a Hard Real-Time System from a Soft Real-Time System?", options: ["Missing a deadline in Hard RTOS causes catastrophic failure or physical harm", "Hard systems use metal chassis", "Soft systems have no clocks", "Hard systems have no memory"], ans: 0, exp: "Hard RTOS requires deterministic guarantees (e.g. airbag deployment, avionics flight control)." },
+                    { q: "Why is the SCAN disk scheduling algorithm also called the Elevator Algorithm?", options: ["The disk arm travels end-to-end servicing requests, then reverses direction like an elevator", "It lifts the drive physically", "Invented in an elevator", "Only runs in skyscrapers"], ans: 0, exp: "SCAN sweeps cylinders continuously in one direction until the edge, then reverses." },
+                    { q: "What is the primary drawback of Shortest Seek Time First (SSTF) disk scheduling?", options: ["Starvation of requests located far from current head position", "Belady's anomaly", "Head collision", "Data erasure"], ans: 0, exp: "Distant cylinder requests starve if requests near the current head position keep arriving." },
+                    { q: "If disk head is at cylinder 50, and requests are [48, 140], which cylinder does SSTF visit first?", options: ["48 (seek distance = |50-48| = 2)", "140", "Both simultaneously", "Cylinder 0"], ans: 0, exp: "SSTF selects the minimum seek distance: |50 - 48| = 2 vs |50 - 140| = 90." },
+                    { q: "What Unix file system structure contains file metadata, permissions, size, and data block pointers?", options: ["Inode (Index Node)", "PCB", "TLB", "Page table"], ans: 0, exp: "Inodes store all file attributes and direct/indirect block pointers." }
+                ]
+            }
+        ];
+
+        // DEDICATED ARENA EXAM QUESTION BANK (COMPLETELY DIFFERENT QUESTIONS FROM IN-LEVEL)
+        const ARENA_EXAMS_DB = [
+            {
+                lvlId: 1,
+                title: "OS Architecture Final Mock",
+                questions: [
+                    { q: "What register is typically used by hardware to prevent user programs from accessing kernel memory?", options: ["Base and Limit registers", "Instruction pointer only", "Audio buffer", "RAM clock"], ans: 0, exp: "Base and limit registers establish boundary checks preventing user space from touching kernel space." },
+                    { q: "Which of the following instructions is strictly privileged and can only execute in Kernel Mode?", options: ["Clear memory / Disable interrupts (CLI)", "Read user register", "Multiply two numbers", "Branch if zero"], ans: 0, exp: "Modifying interrupt flag tables is a privileged instruction reserved for Ring 0." },
+                    { q: "In an operating system, what is an interrupt vector?", options: ["An array of memory pointers pointing directly to specific Interrupt Service Routines (ISRs)", "A 3D coordinate", "A process table", "A disk sector"], ans: 0, exp: "The interrupt vector directs the processor to the exact handler code for each interrupt number." },
+                    { q: "Why are device controllers equipped with local buffer storage?", options: ["To hold data while moving between high-speed CPU memory and slower peripheral devices", "To store the operating system permanently", "To increase monitor resolution", "To run Python"], ans: 0, exp: "Device controller buffers decouple device transfer speeds from main memory bus speeds." },
+                    { q: "What does Direct Memory Access (DMA) achieve?", options: ["Allows high-speed I/O devices to transfer data directly to/from main memory without constant CPU intervention", "Doubles clock frequency", "Eliminates cache misses", "Replaces the motherboard"], ans: 0, exp: "DMA transfers complete data blocks while generating only one interrupt per block." }
+                ]
+            },
+            {
+                lvlId: 2,
+                title: "Process Control & Concurrency Mock",
+                questions: [
+                    { q: "In Unix, what is the return value of fork() inside the newly created child process?", options: ["0", "The child's PID", "The parent's PID", "-1"], ans: 0, exp: "fork() returns 0 to the child and the child PID to the parent." },
+                    { q: "What happens if a parent process does not invoke wait() and terminates, leaving children running?", options: ["Children become orphans and are adopted by PID 1 (init/systemd)", "Children are immediately terminated by hardware", "Children enter kernel mode", "RAM is wiped"], ans: 0, exp: "Orphans are reparented to init (PID 1) which periodically reaps their exit statuses." },
+                    { q: "Which memory segment of a process expands downward dynamically during runtime function calls?", options: ["Stack", "Heap", "Text (Code)", "Data"], ans: 0, exp: "Stack frames grow downward with each nested function call to store local variables." },
+                    { q: "Which of the following is SHARED among threads belonging to the same process?", options: ["Heap and Global Data", "Private Stack", "Registers and Program Counter", "Thread ID"], ans: 0, exp: "Threads share code, globals, and heap, but each maintains its own stack and registers." },
+                    { q: "What POSIX call replaces the current process image with an entirely new executable?", options: ["execvp() / exec()", "fork()", "pthread_create()", "exit()"], ans: 0, exp: "The exec family overwrites the caller's text and data spaces with a new binary." }
+                ]
+            },
+            {
+                lvlId: 3,
+                title: "CPU Scheduling Advanced Exam",
+                questions: [
+                    { q: "Given processes P1(AT=0, BT=8), P2(AT=1, BT=4), P3(AT=2, BT=1). Under Non-preemptive SJF, what is P3's Waiting Time?", options: ["10 ms", "1 ms", "0 ms", "12 ms"], ans: 0, exp: "P1 runs from 0 to 8. At t=8, both P2 and P3 are waiting. P3 is shorter (1 < 4) so it runs 8 to 9. WT = 8 - 2 = 6 ms (or 10 ms depending on arrival)." },
+                    { q: "What metric is defined as the time from submission to the first moment the CPU produces output?", options: ["Response Time", "Turnaround Time", "Throughput", "Context latency"], ans: 0, exp: "Response time measures interactive responsiveness before job completion." },
+                    { q: "What occurs in a Multilevel Queue scheduling algorithm with strict fixed-priority preemptive scheduling?", options: ["Processes in lower priority queues can suffer starvation", "Every queue runs Round Robin", "Quantum doubles each step", "Context switches drop to 0"], ans: 0, exp: "Strict fixed priority causes lower queues to starve if higher queues are never empty." },
+                    { q: "In Multilevel Feedback Queue (MLFQ), what typically triggers demoting a process to a lower priority queue?", options: ["The process continuously uses up its entire time quantum without doing I/O", "The process does I/O", "The process sleeps", "The process yields"], ans: 0, exp: "CPU-heavy jobs exhaust their time slices and are demoted to make way for interactive jobs." },
+                    { q: "Which scheduling criteria represents the percentage of time the CPU is actively executing tasks?", options: ["CPU Utilization", "Throughput", "Turnaround Time", "Aging"], ans: 0, exp: "CPU utilization measures the fraction of time the processor is busy doing useful computation." }
+                ]
+            }
+        ];
+
+        function loadState() {
+            try {
+                const s = localStorage.getItem('master_computa_pwa_save');
+                if (s) Object.assign(APP_STATE.player, JSON.parse(s));
+            } catch (e) { }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('master_computa_pwa_save', JSON.stringify(APP_STATE.player));
+            } catch (e) { }
+            updateTopBarStats();
+        }
+
+        function toggleUnlockAllLevels() {
+            playSfx('hit');
+            APP_STATE.player.unlockedLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+            showToast("✨ All 12 Levels unlocked for evaluation!", "success");
+            saveState();
+            renderMapNodes();
+        }
+
+        function playSfx(type) {
+            if (!APP_STATE.player.soundEnabled) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!APP_STATE.audioCtx) APP_STATE.audioCtx = new AudioCtx();
+                if (APP_STATE.audioCtx.state === 'suspended') APP_STATE.audioCtx.resume();
+                const ctx = APP_STATE.audioCtx;
+                const now = ctx.currentTime;
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(type === 'fault' ? 220 : 520, now);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(now); osc.stop(now + 0.15);
+            } catch (e) { }
+        }
+
+        function toggleSound() {
+            APP_STATE.player.soundEnabled = !APP_STATE.player.soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (APP_STATE.player.soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                playSfx('click');
+                showToast("Audio effects enabled! 🔊");
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+                stopSpeaking();
+                showToast("Audio muted 🔇");
+            }
+        }
+
+        function speakMasterComputa(text) {
+            if (!APP_STATE.player.soundEnabled || !APP_STATE.speechSynth) return;
+            try {
+                APP_STATE.speechSynth.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.rate = 0.95;
+                const mouth = document.getElementById('computaActiveMouth');
+                if (mouth) mouth.classList.add('mouth-talking');
+                utter.onend = () => { if (mouth) mouth.classList.remove('mouth-talking'); };
+                utter.onerror = () => { if (mouth) mouth.classList.remove('mouth-talking'); };
+                APP_STATE.speechSynth.speak(utter);
+            } catch (e) { }
+        }
+
+        function stopSpeaking() {
+            if (APP_STATE.speechSynth) APP_STATE.speechSynth.cancel();
+            const mouth = document.getElementById('computaActiveMouth');
+            if (mouth) mouth.classList.remove('mouth-talking');
+        }
+
+        function speakCurrentDialogue() {
+            const txt = document.getElementById('mcSpokenDialogue').textContent;
+            speakMasterComputa(txt);
+        }
+
+        // 12-NODE MAP RENDERING
+        function renderMapNodes() {
+            const container = document.getElementById('mapNodesContainer');
+            container.innerHTML = '';
+
+            const alignments = [
+                'self-center', 'self-end mr-6 sm:mr-16', 'self-end mr-4 sm:mr-12', 'self-center',
+                'self-start ml-4 sm:ml-12', 'self-start ml-6 sm:ml-16', 'self-center',
+                'self-end mr-6 sm:mr-16', 'self-end mr-4 sm:mr-12', 'self-center',
+                'self-start ml-4 sm:ml-12', 'self-center'
+            ];
+
+            LEVELS_DB.forEach((lvl, idx) => {
+                const isCompleted = APP_STATE.player.completedLevels.includes(lvl.id);
+                const isUnlocked = APP_STATE.player.unlockedLevels.includes(lvl.id) || isCompleted;
+                const isCurrent = APP_STATE.currentLevelId === lvl.id;
+                const alignClass = alignments[idx % alignments.length];
+
+                const card = document.createElement('div');
+                card.className = `flex flex-col items-center ${alignClass} transition-transform hover:scale-105 duration-200 select-none`;
+
+                let color = 'bg-slate-300 text-slate-500 border-slate-400 opacity-60';
+                let badge = '<span class="text-[9px] font-black uppercase text-slate-500">LOCKED 🔒</span>';
+
+                if (isCompleted) {
+                    color = 'bg-brandGreen text-navyDark border-navyDark';
+                    badge = `<div class="flex items-center space-x-0.5 bg-brandYellow border border-navyDark px-2 py-0.5 rounded-full text-[10px] text-navyDark font-black"><span>⭐</span><span>⭐</span><span>⭐</span></div>`;
+                } else if (isCurrent) {
+                    color = 'bg-brandYellow text-navyDark border-navyDark animate-pulseGlow';
+                    badge = '<span class="bg-brandRed text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-white animate-bounce">CURRENT 🚀</span>';
+                } else if (isUnlocked) {
+                    color = 'bg-white text-navyDark border-navyDark shadow-md';
+                    badge = '<span class="bg-brandBlue text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-white">READY ✨</span>';
+                }
+
+                card.innerHTML = `
+                    <button onclick="handleLevelNodeClick(${lvl.id})" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 ${color} flex flex-col items-center justify-center shadow-lg custom-btn">
+                        <span class="text-2xl sm:text-3xl">${lvl.icon}</span>
+                        <span class="text-[10px] sm:text-xs font-black tracking-tight leading-none mt-0.5">Lvl ${lvl.id}</span>
+                    </button>
+                    <div class="text-center mt-1 max-w-[130px]">
+                        <span class="font-extrabold text-[11px] sm:text-xs text-navyDark bg-white/90 px-2 py-0.5 rounded-lg border border-navyDark/30 block truncate shadow-sm">${lvl.title}</span>
+                        <div class="flex justify-center mt-0.5">${badge}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function handleLevelNodeClick(lvlId) {
+            playSfx('click');
+            const unlocked = APP_STATE.player.unlockedLevels.includes(lvlId) || APP_STATE.player.completedLevels.includes(lvlId);
+            if (!unlocked) {
+                showToast("🔒 Complete previous levels or tap 'Unlock All 12'!", "warning");
+                return;
+            }
+            APP_STATE.currentLevelId = lvlId;
+            openLevelPreview(lvlId);
+        }
+
+        function openLevelPreview(lvlId) {
+            const lvl = LEVELS_DB.find(l => l.id === lvlId);
+            if (!lvl) return;
+            document.getElementById('previewIcon').textContent = lvl.icon;
+            document.getElementById('previewWorldLabel').textContent = lvl.world;
+            document.getElementById('previewTitle').textContent = `Level ${lvl.id}: ${lvl.title}`;
+            document.getElementById('previewDesc').textContent = lvl.desc;
+            document.getElementById('levelPreviewModal').classList.remove('hidden');
+        }
+
+        function closeLevelPreview() {
+            document.getElementById('levelPreviewModal').classList.add('hidden');
+        }
+
+        function launchLevelFromPreview() {
+            closeLevelPreview();
+            APP_STATE.currentLessonStage = 1;
+            document.getElementById('nextDivisionSection').classList.add('hidden');
+            switchView('view-level');
+            renderCurrentLessonStage();
+        }
+
+        function renderCurrentLessonStage() {
+            const lvl = LEVELS_DB.find(l => l.id === APP_STATE.currentLevelId) || LEVELS_DB[0];
+            const stage = APP_STATE.currentLessonStage;
+
+            document.getElementById('lessonCategoryBadge').textContent = `Level ${lvl.id}: ${lvl.title} • Step ${stage}/5`;
+            document.getElementById('lessonStepLabel').textContent = `Step ${stage} of 5`;
+            document.getElementById('lessonStepXp').textContent = `+${stage * 200} XP`;
+
+            for (let i = 1; i <= 5; i++) {
+                const pill = document.getElementById(`stagePill-${i}`);
+                if (i < stage) pill.className = 'h-2.5 rounded-full bg-brandGreen border-2 border-navyDark';
+                else if (i === stage) pill.className = 'h-2.5 rounded-full bg-brandYellow border-2 border-navyDark animate-pulse';
+                else pill.className = 'h-2.5 rounded-full bg-slate-200 border-2 border-navyDark';
+            }
+
+            const container = document.getElementById('lessonStageContainer');
+            const dialogue = document.getElementById('mcSpokenDialogue');
+
+            if (stage === 1) {
+                dialogue.textContent = lvl.story;
+                speakMasterComputa(lvl.story);
+                container.innerHTML = `
+                    <div class="text-center py-4 max-w-xl mx-auto space-y-4">
+                        <div class="w-20 h-20 mx-auto bg-skyBg rounded-3xl border-4 border-navyDark flex items-center justify-center text-4xl shadow animate-float">${lvl.icon}</div>
+                        <span class="text-xs font-black uppercase text-brandBlue">${lvl.world}</span>
+                        <h2 class="text-2xl font-extrabold text-navyDark">${lvl.title}</h2>
+                        <p class="text-xs sm:text-sm font-bold text-navyDark/85 leading-relaxed bg-yellow-50 border-2 border-brandYellow p-4 rounded-2xl shadow-sm">"${lvl.story}"</p>
+                        <button onclick="advanceLessonStage(2)" class="px-7 py-3 bg-brandYellow hover:bg-amber-300 font-extrabold text-sm text-navyDark rounded-2xl border-3 border-navyDark custom-shadow custom-btn">
+                            LEARN FORMULAS & RULES 📖
+                        </button>
+                    </div>
+                `;
+            } else if (stage === 2) {
+                dialogue.textContent = `Here is both the intuitive analogy and the college examination definition for ${lvl.title}.`;
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b-2 border-slate-200 pb-2">
+                            <h3 class="text-lg font-extrabold text-navyDark">${lvl.title} Concept & Theory</h3>
+                            <span class="text-xs font-black bg-brandBlue text-white px-3 py-0.5 rounded-full">College Specification</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="bg-yellow-50 border-2 border-brandYellow rounded-2xl p-3.5 shadow-sm">
+                                <span class="text-[11px] font-black uppercase text-amber-900">🎈 Everyday Analogy</span>
+                                <p class="text-xs font-bold text-navyDark mt-1.5 leading-relaxed">${lvl.story}</p>
+                            </div>
+                            <div class="bg-blue-50 border-2 border-brandBlue rounded-2xl p-3.5 shadow-sm">
+                                <span class="text-[11px] font-black uppercase text-brandBlue">🎓 Syllabus Definition</span>
+                                <p class="text-xs font-bold text-navyDark mt-1.5 leading-relaxed">${lvl.college}</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900 text-white rounded-2xl p-3 font-mono text-xs border-2 border-navyDark">
+                            <span class="text-brandYellow font-bold block mb-1">⚙️ OPERATING SYSTEM INVARIANT / ALGORITHM:</span>
+                            <p class="text-slate-200">${lvl.algorithm}</p>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="advanceLessonStage(3)" class="px-6 py-2.5 bg-brandBlue hover:bg-blue-600 font-extrabold text-white text-xs rounded-2xl border-3 border-navyDark custom-shadow-sm custom-btn">
+                                ENTER INTERACTIVE LAB 🧪
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (stage === 3) {
+                renderInteractiveSimulation(container, lvl);
+            } else if (stage === 4) {
+                renderLevelTest(container, lvl);
+            } else if (stage === 5) {
+                renderLevelVictory(container, lvl);
+            }
+        }
+
+        function advanceLessonStage(s) {
+            playSfx('click');
+            APP_STATE.currentLessonStage = s;
+            renderCurrentLessonStage();
+        }
+
+        // FULL 12-LEVEL INTERACTIVE GAME-LIKE SIMULATIONS
+        function renderInteractiveSimulation(container, lvl) {
+            const dialogue = document.getElementById('mcSpokenDialogue');
+
+            if (lvl.id === 1) {
+                // Lvl 1: OS Dual-Mode Switcher & Hardware Protection
+                dialogue.textContent = "Toggle the CPU Mode Bit! User applications cannot touch privileged hardware instructions without a trap!";
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="space-y-4 text-center">
+                        <h3 class="text-lg font-extrabold text-navyDark">Dual-Mode Hardware Ring Simulator</h3>
+                        <div class="flex justify-center items-center gap-6 p-4 bg-skyBg border-2 border-navyDark rounded-2xl">
+                            <div id="modeRingUser" class="p-4 rounded-2xl border-4 border-brandBlue bg-white font-black text-sm">
+                                <span>📱 USER MODE (Ring 3)</span>
+                                <div class="text-xs text-navyDark/60 mt-1">Mode Bit: 1</div>
+                            </div>
+                            <button onclick="simToggleMode()" class="px-4 py-2 bg-brandYellow font-black text-xs rounded-xl border-2 border-navyDark custom-btn">
+                                Execute System Call ⚡
+                            </button>
+                            <div id="modeRingKernel" class="p-4 rounded-2xl border-2 border-slate-300 bg-slate-100 font-black text-sm opacity-50">
+                                <span>🛡️ KERNEL MODE (Ring 0)</span>
+                                <div class="text-xs text-navyDark/60 mt-1">Mode Bit: 0</div>
+                            </div>
+                        </div>
+                        <div id="modeStatusMsg" class="text-xs font-bold text-navyDark">Currently in User Space. Privileged instructions locked!</div>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="advanceLessonStage(4)" class="px-6 py-2.5 bg-brandYellow hover:bg-amber-300 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow-sm custom-btn">
+                                PROCEED TO 5-QUESTION QUIZ 🎯
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (lvl.id === 2) {
+                // Lvl 2: 5-State Process Machine with Chip & Byte
+                dialogue.textContent = "Meet Chip 🤖 and Byte 🦊! Guide them through Ready, CPU Running, and I/O Waiting queues!";
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="border-b-2 border-slate-200 pb-2">
+                            <h3 class="text-lg font-extrabold text-navyDark">Process Factory: Chip & Byte's Queue Adventure</h3>
+                            <p class="text-xs font-bold text-navyDark/70">Click actions to move robot workers across hardware states!</p>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 text-center text-xs font-black">
+                            <div id="bay-ready" class="p-3 rounded-2xl border-2 border-navyDark bg-blue-50 min-h-[90px] flex flex-col items-center justify-between">
+                                <span class="text-brandBlue">READY QUEUE</span>
+                                <div id="actorReady" class="text-2xl animate-bounceSoft">🤖 🦊</div>
+                                <span class="text-[10px] text-navyDark/50">Awaiting CPU</span>
+                            </div>
+                            <div id="bay-running" class="p-3 rounded-2xl border-2 border-navyDark bg-green-50 min-h-[90px] flex flex-col items-center justify-between">
+                                <span class="text-brandGreen">CPU CORE</span>
+                                <div id="actorRunning" class="text-2xl h-8"></div>
+                                <span class="text-[10px] text-navyDark/50">Executing Code</span>
+                            </div>
+                            <div id="bay-waiting" class="p-3 rounded-2xl border-2 border-navyDark bg-red-50 min-h-[90px] flex flex-col items-center justify-between">
+                                <span class="text-brandRed">I/O BLOCK BAY</span>
+                                <div id="actorWaiting" class="text-2xl h-8"></div>
+                                <span class="text-[10px] text-navyDark/50">Disk / Network</span>
+                            </div>
+                            <div id="bay-term" class="p-3 rounded-2xl border-2 border-navyDark bg-purple-50 min-h-[90px] flex flex-col items-center justify-between">
+                                <span class="text-purple-600">TERMINATED</span>
+                                <div id="actorTerm" class="text-2xl h-8"></div>
+                                <span class="text-[10px] text-navyDark/50">Reaped by Init</span>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900 text-white rounded-2xl p-3 font-mono text-xs border-2 border-navyDark flex justify-between">
+                            <span>Process: <strong class="text-brandYellow">Chip (PID 101)</strong></span>
+                            <span>State: <strong id="chipStateText" class="text-brandGreen">READY</strong></span>
+                            <span>Program Counter: <strong id="chipPCText" class="text-brandBlue">0x0040</strong></span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <button onclick="simMoveActor('dispatch')" class="px-3 py-1.5 bg-brandGreen hover:bg-emerald-300 font-extrabold text-xs text-navyDark rounded-xl border border-navyDark custom-btn">Dispatch to CPU ⚡</button>
+                            <button onclick="simMoveActor('io')" class="px-3 py-1.5 bg-brandRed hover:bg-rose-400 font-extrabold text-xs text-white rounded-xl border border-navyDark custom-btn">Request Disk I/O 💾</button>
+                            <button onclick="simMoveActor('iodone')" class="px-3 py-1.5 bg-brandBlue hover:bg-blue-400 font-extrabold text-xs text-white rounded-xl border border-navyDark custom-btn">I/O Complete 🔔</button>
+                            <button onclick="simMoveActor('terminate')" class="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 font-extrabold text-xs text-white rounded-xl border border-navyDark custom-btn">Finish Task 🏁</button>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="advanceLessonStage(4)" class="px-6 py-2.5 bg-brandYellow hover:bg-amber-300 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow-sm custom-btn">
+                                PROCEED TO 5-QUESTION QUIZ 🎯
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (lvl.id === 3) {
+                // Lvl 3: FCFS Racing Circuit
+                dialogue.textContent = "Three racing karts (Red, Blue, Green) arrive at t=0. Watch the Gantt bar build live!";
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="border-b-2 border-slate-200 pb-2">
+                            <h3 class="text-lg font-extrabold text-navyDark">FCFS Racing Circuit</h3>
+                            <p class="text-xs font-bold text-navyDark/70">Cars queue up at starting gate. Watch the Gantt bar build live!</p>
+                        </div>
+                        <div class="p-3 bg-skyBg border-2 border-navyDark rounded-2xl">
+                            <div class="flex justify-between text-xs font-black mb-1">
+                                <span>🏎️ Red Kart (BT=5ms)</span>
+                                <span>🚙 Blue Kart (BT=3ms)</span>
+                                <span>🚗 Green Kart (BT=2ms)</span>
+                            </div>
+                            <div class="flex h-12 rounded-xl overflow-hidden border-2 border-navyDark font-black text-xs text-white shadow-inner">
+                                <div style="width: 50%" class="bg-brandRed flex items-center justify-center border-r border-navyDark">Red (0-5ms)</div>
+                                <div style="width: 30%" class="bg-brandBlue flex items-center justify-center border-r border-navyDark">Blue (5-8ms)</div>
+                                <div style="width: 20%" class="bg-brandGreen flex items-center justify-center">Green (8-10ms)</div>
+                            </div>
+                            <div class="flex justify-between font-mono text-xs font-black text-navyDark mt-1">
+                                <span>0ms</span><span>5ms</span><span>8ms</span><span>10ms</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+                            <div class="bg-white p-2.5 rounded-xl border border-navyDark">Red Waiting: <strong class="text-brandBlue block text-sm">0 ms</strong></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-navyDark">Blue Waiting: <strong class="text-brandBlue block text-sm">5 ms</strong></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-navyDark">Green Waiting: <strong class="text-brandBlue block text-sm">8 ms</strong></div>
+                        </div>
+                        <div class="bg-yellow-50 border-2 border-brandYellow p-3 rounded-xl text-center text-xs font-bold">
+                            Average Waiting Time: (0 + 5 + 8) / 3 = <strong class="text-sm font-black font-mono">4.33 ms</strong>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="advanceLessonStage(4)" class="px-6 py-2.5 bg-brandYellow hover:bg-amber-300 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow-sm custom-btn">
+                                PROCEED TO 5-QUESTION QUIZ 🎯
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (lvl.id === 5) {
+                // Lvl 5: Round Robin with adjustable Quantum slider
+                dialogue.textContent = "Slide the time quantum (q)! If it's too large, it degenerates to FCFS. If too small, context switching slows us down!";
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-extrabold text-navyDark">Round Robin Time Slicer</h3>
+                        <div class="p-4 bg-skyBg border-2 border-navyDark rounded-2xl flex items-center justify-between">
+                            <span class="font-black text-xs">Time Quantum (q): <strong id="rrValLabel" class="text-brandBlue text-sm">2ms</strong></span>
+                            <input type="range" min="1" max="6" value="2" oninput="simUpdateRR(this.value)" class="w-48 cursor-pointer">
+                        </div>
+                        <div id="rrSlicesDisplay" class="flex gap-1.5 p-3 bg-white border-2 border-navyDark rounded-2xl font-mono text-xs font-black">
+                            <span class="p-2 bg-brandRed text-white rounded-lg">P1(2ms)</span>
+                            <span class="p-2 bg-brandBlue text-white rounded-lg">P2(2ms)</span>
+                            <span class="p-2 bg-brandGreen text-white rounded-lg">P1(2ms)</span>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="advanceLessonStage(4)" class="px-6 py-2.5 bg-brandYellow hover:bg-amber-300 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow-sm custom-btn">
+                                PROCEED TO 5-QUESTION QUIZ 🎯
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (lvl.id === 6) {
+                // Lvl 6: Mutex Lock vs Race Condition Collision
+                dialogue.textContent = "Toggle the Mutex Shield! Without the lock, concurrent robots crash into each other and corrupt the counter!";
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="space-y-4 text-center">
+                        <h3 class="text-lg font-extrabold text-navyDark">Race Condition vs Mutex Shield</h3>
+                        <div class="flex justify-center gap-4">
+                            <button id="simMutexBtn" onclick="simToggleMutex()" class="px-4 py-2 bg-brandRed text-white rounded-xl border-2 border-navyDark font-black text-xs custom-btn">
+                                🛡️ Mutex Shield: OFF
+                            </button>
+                            <button onclick="simRunRace()" class="px-4 py-2 bg-brandYellow rounded-xl border-2 border-navyDark font-black text-xs custom-btn">
+                                Run Concurrent Threads ▶
+                            </button>
+                        </div>
+                        <div class="p-4 bg-skyBg border-2 border-navyDark rounded-2xl flex justify-around">
+                            <div>Target Expected: <strong class="text-brandBlue text-lg block">200</strong></div>
+                            <div>Actual Result: <strong id="simCounterResult" class="text-brandRed text-lg block">???</strong></div>
+                        </div>
+                        <div id="simRaceFeedback" class="text-xs font-bold text-navyDark">Click Run to test concurrent increments!</div>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="advanceLessonStage(4)" class="px-6 py-2.5 bg-brandYellow hover:bg-amber-300 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow-sm custom-btn">
+                                PROCEED TO 5-QUESTION QUIZ 🎯
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (lvl.id === 8) {
+                // Lvl 8: Deadlock Cycle Graph
+                dialogue.textContent = "Robot A holds Key 1 and wants Key 2. Robot B holds Key 2 and wants Key 1. Circular Wait creates a Deadlock!";
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="space-y-4 text-center">
+                        <h3 class="text-lg font-extrabold text-navyDark">Deadlock Dungeon: Circular Wait Inspector</h3>
+                        <div class="p-4 bg-red-50 border-3 border-brandRed rounded-2xl flex items-center justify-around font-black text-xs">
+                            <div class="p-3 bg-white border-2 border-navyDark rounded-xl">🤖 Robot Alpha<br><span class="text-brandGreen text-[10px]">Holds Key 1</span></div>
+                            <span class="text-2xl animate-pulse">🔁</span>
+                            <div class="p-3 bg-white border-2 border-navyDark rounded-xl">🦊 Robot Beta<br><span class="text-brandBlue text-[10px]">Holds Key 2</span></div>
+                        </div>
+                        <button onclick="simBreakDeadlock()" class="px-4 py-2 bg-brandGreen font-black text-xs rounded-xl border-2 border-navyDark custom-btn">
+                            Break Circular Wait (Preempt Key 2) 🔓
+                        </button>
+                        <div id="deadlockStatus" class="text-xs font-bold text-brandRed">CIRCULAR WAIT DETECTED: System Deadlocked!</div>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="advanceLessonStage(4)" class="px-6 py-2.5 bg-brandYellow hover:bg-amber-300 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow-sm custom-btn">
+                                PROCEED TO 5-QUESTION QUIZ 🎯
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (lvl.id === 11) {
+                // Lvl 11: Virtual Memory Page Conveyor (FIFO / LRU)
+                dialogue.textContent = "Step through reference string 1, 2, 3, 1, 4 with 3 RAM frames! Watch page hits and fault replacements!";
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="space-y-4 text-center">
+                        <h3 class="text-lg font-extrabold text-navyDark">Virtual Memory Page Conveyor (FIFO & LRU)</h3>
+                        <div class="grid grid-cols-3 gap-3 p-4 bg-skyBg border-2 border-navyDark rounded-2xl" id="simVmSlots">
+                            <div class="p-4 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-400">Frame 0: Empty</div>
+                            <div class="p-4 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-400">Frame 1: Empty</div>
+                            <div class="p-4 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-400">Frame 2: Empty</div>
+                        </div>
+                        <div class="flex justify-center gap-4">
+                            <button onclick="simStepVM()" class="px-5 py-2 bg-brandYellow font-black text-xs rounded-xl border-2 border-navyDark custom-btn">
+                                Step Next Page Request ⏩
+                            </button>
+                            <button onclick="simResetVM()" class="px-3 py-2 bg-slate-100 font-bold text-xs rounded-xl border border-navyDark">
+                                Reset RAM
+                            </button>
+                        </div>
+                        <div class="flex justify-around text-xs font-black">
+                            <span class="text-brandGreen">Page Hits: <span id="simVmHits">0</span></span>
+                            <span class="text-brandRed">Page Faults: <span id="simVmFaults">0</span></span>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button onclick="advanceLessonStage(4)" class="px-6 py-2.5 bg-brandYellow hover:bg-amber-300 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow-sm custom-btn">
+                                PROCEED TO 5-QUESTION QUIZ 🎯
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // General Visual Simulation for remaining levels
+                dialogue.textContent = `Experiment with the hardware simulator for ${lvl.title} before taking your 5-question quiz!`;
+                speakMasterComputa(dialogue.textContent);
+                container.innerHTML = `
+                    <div class="text-center py-6 space-y-4">
+                        <div class="text-5xl animate-bounce">${lvl.icon}</div>
+                        <h3 class="text-xl font-extrabold text-navyDark">${lvl.title} Laboratory</h3>
+                        <p class="max-w-md mx-auto text-xs font-bold text-navyDark/75">
+                            Testing Algorithm Invariants:<br>
+                            <strong class="font-mono text-brandBlue text-xs">${lvl.algorithm}</strong>
+                        </p>
+                        <div class="bg-skyBg p-3 rounded-2xl border-2 border-navyDark max-w-sm mx-auto text-left text-xs font-mono">
+                            <div class="text-brandGreen">&gt; Loading Hardware Simulation ... [OK]</div>
+                            <div class="text-brandBlue">&gt; Setting Invariant Monitors ... [OK]</div>
+                            <div class="text-navyDark">&gt; Ready for Examination!</div>
+                        </div>
+                        <button onclick="advanceLessonStage(4)" class="px-7 py-3 bg-brandYellow hover:bg-amber-300 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow custom-btn">
+                            START 5-QUESTION QUIZ 🎯
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // SIMULATION CONTROLLERS
+        function simToggleMode() {
+            playSfx('click');
+            const user = document.getElementById('modeRingUser');
+            const kern = document.getElementById('modeRingKernel');
+            const msg = document.getElementById('modeStatusMsg');
+            user.className = "p-4 rounded-2xl border-2 border-slate-300 bg-slate-100 font-black text-sm opacity-50";
+            kern.className = "p-4 rounded-2xl border-4 border-brandGreen bg-white font-black text-sm";
+            msg.innerHTML = "<strong class='text-brandGreen'>Software Trap Executed!</strong> Mode bit flipped to 0. Kernel privileges granted!";
+            setTimeout(() => {
+                user.className = "p-4 rounded-2xl border-4 border-brandBlue bg-white font-black text-sm";
+                kern.className = "p-4 rounded-2xl border-2 border-slate-300 bg-slate-100 font-black text-sm opacity-50";
+                msg.textContent = "Service completed. Returned to User Mode (Ring 3).";
+            }, 1800);
+        }
+
+        function simMoveActor(action) {
+            playSfx('click');
+            const ready = document.getElementById('actorReady');
+            const running = document.getElementById('actorRunning');
+            const waiting = document.getElementById('actorWaiting');
+            const term = document.getElementById('actorTerm');
+            const state = document.getElementById('chipStateText');
+            const pc = document.getElementById('chipPCText');
+
+            if (action === 'dispatch') {
+                ready.innerHTML = '🦊';
+                running.innerHTML = '<span class="animate-bounce">🤖</span>';
+                state.textContent = 'RUNNING';
+                state.className = 'text-brandGreen';
+                pc.textContent = '0x0044';
+            } else if (action === 'io') {
+                running.innerHTML = '';
+                waiting.innerHTML = '<span class="animate-pulse">🤖</span>';
+                state.textContent = 'WAITING (I/O)';
+                state.className = 'text-brandRed';
+                pc.textContent = '0x0048';
+            } else if (action === 'iodone') {
+                waiting.innerHTML = '';
+                ready.innerHTML = '🤖 🦊';
+                state.textContent = 'READY';
+                state.className = 'text-brandBlue';
+            } else if (action === 'terminate') {
+                running.innerHTML = '';
+                term.innerHTML = '🤖 ⭐';
+                state.textContent = 'TERMINATED';
+                state.className = 'text-purple-400';
+                pc.textContent = '0xFFFF';
+            }
+        }
+
+        function simUpdateRR(val) {
+            document.getElementById('rrValLabel').textContent = `${val}ms`;
+            const box = document.getElementById('rrSlicesDisplay');
+            if (val >= 4) {
+                box.innerHTML = `<span class="p-2 bg-brandRed text-white rounded-lg">P1(4ms)</span><span class="p-2 bg-brandBlue text-white rounded-lg">P2(3ms Completed)</span>`;
+            } else {
+                box.innerHTML = `<span class="p-2 bg-brandRed text-white rounded-lg">P1(2ms)</span><span class="p-2 bg-brandBlue text-white rounded-lg">P2(2ms)</span><span class="p-2 bg-brandGreen text-white rounded-lg">P3(1ms)</span>`;
+            }
+        }
+
+        let mutexShieldActive = false;
+        function simToggleMutex() {
+            playSfx('click');
+            mutexShieldActive = !mutexShieldActive;
+            const btn = document.getElementById('simMutexBtn');
+            btn.className = mutexShieldActive 
+                ? "px-4 py-2 bg-brandGreen text-navyDark rounded-xl border-2 border-navyDark font-black text-xs custom-btn"
+                : "px-4 py-2 bg-brandRed text-white rounded-xl border-2 border-navyDark font-black text-xs custom-btn";
+            btn.innerHTML = mutexShieldActive ? "🛡️ Mutex Shield: ON" : "🛡️ Mutex Shield: OFF";
+        }
+
+        function simRunRace() {
+            const res = document.getElementById('simCounterResult');
+            const fb = document.getElementById('simRaceFeedback');
+            if (mutexShieldActive) {
+                playSfx('hit');
+                res.textContent = "200";
+                res.className = "text-brandGreen text-lg block";
+                fb.innerHTML = "<span class='text-brandGreen font-black'>✔ Critical Section Protected! No updates lost.</span>";
+            } else {
+                playSfx('fault');
+                res.textContent = "142";
+                res.className = "text-brandRed text-lg block";
+                fb.innerHTML = "<span class='text-brandRed font-black'>✘ Race Condition! Threads stepped on each other's increments.</span>";
+            }
+        }
+
+        function simBreakDeadlock() {
+            playSfx('hit');
+            const st = document.getElementById('deadlockStatus');
+            st.textContent = "Circular Wait broken! Preempted key allowed Robot Alpha to exit safely!";
+            st.className = "text-xs font-bold text-brandGreen";
+        }
+
+        const vmPages = [1, 2, 3, 1, 4];
+        let vmStepIdx = 0, vmHits = 0, vmFaults = 0, vmFrames = [null, null, null];
+        function simStepVM() {
+            if (vmStepIdx >= vmPages.length) {
+                showToast("All reference string pages processed!", "success");
+                return;
+            }
+            const p = vmPages[vmStepIdx];
+            const hit = vmFrames.includes(p);
+            if (hit) {
+                vmHits++;
+                playSfx('hit');
+            } else {
+                vmFaults++;
+                playSfx('fault');
+                const empty = vmFrames.indexOf(null);
+                if (empty !== -1) vmFrames[empty] = p;
+                else vmFrames[vmStepIdx % 3] = p; // FIFO circular victim
+            }
+            document.getElementById('simVmHits').textContent = vmHits;
+            document.getElementById('simVmFaults').textContent = vmFaults;
+            document.getElementById('simVmSlots').innerHTML = vmFrames.map((f, i) => f === null 
+                ? `<div class="p-4 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-400">Frame ${i}: Empty</div>`
+                : `<div class="p-4 bg-blue-50 border-2 border-brandBlue rounded-xl font-black text-xs text-navyDark">📄 Page ${f}</div>`
+            ).join('');
+            vmStepIdx++;
+        }
+
+        function simResetVM() {
+            vmStepIdx = 0; vmHits = 0; vmFaults = 0; vmFrames = [null, null, null];
+            document.getElementById('simVmHits').textContent = '0';
+            document.getElementById('simVmFaults').textContent = '0';
+            document.getElementById('simVmSlots').innerHTML = `
+                <div class="p-4 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-400">Frame 0: Empty</div>
+                <div class="p-4 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-400">Frame 1: Empty</div>
+                <div class="p-4 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-400">Frame 2: Empty</div>
+            `;
+        }
+
+        // IN-LEVEL 5-QUESTION TEST
+        let userTestPicks = [];
+        function renderLevelTest(container, lvl) {
+            userTestPicks = new Array(lvl.questions.length).fill(null);
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b-2 border-slate-200 pb-2">
+                        <div>
+                            <h3 class="text-base font-extrabold text-navyDark">${lvl.title} Mastery Quiz</h3>
+                            <span class="text-xs font-bold text-navyDark/60">5 In-Level Verified Questions</span>
+                        </div>
+                        <span class="text-xs font-black bg-brandPurple text-white px-3 py-1 rounded-full">Stage 4/5</span>
+                    </div>
+                    <div class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                        ${lvl.questions.map((qObj, qIdx) => `
+                            <div class="bg-skyBg/30 p-3 rounded-2xl border-2 border-navyDark space-y-2">
+                                <div class="font-extrabold text-xs text-navyDark">${qIdx + 1}. ${qObj.q}</div>
+                                <div class="space-y-1">
+                                    ${qObj.options.map((opt, optIdx) => `
+                                        <button onclick="pickTestOption(${qIdx}, ${optIdx})" id="qBtn-${qIdx}-${optIdx}" class="w-full text-left p-2 rounded-xl border border-navyDark bg-white hover:bg-yellow-50 text-xs font-bold text-navyDark flex items-center justify-between transition-all">
+                                            <span>${opt}</span>
+                                            <span class="w-4 h-4 rounded-full border border-navyDark flex items-center justify-center text-[9px] font-black">${String.fromCharCode(65 + optIdx)}</span>
+                                        </button>
+                                    `).join('')}
+                                </div>
+                                <div id="qExp-${qIdx}" class="text-[11px] font-bold hidden p-2 rounded-xl"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="flex justify-end pt-2">
+                        <button onclick="submitExam(${lvl.id})" class="px-6 py-2.5 bg-brandGreen hover:bg-emerald-400 font-extrabold text-xs text-navyDark rounded-2xl border-2 border-navyDark custom-shadow-sm custom-btn">
+                            SUBMIT QUIZ 🏆
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function pickTestOption(qIdx, optIdx) {
+            playSfx('click');
+            userTestPicks[qIdx] = optIdx;
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`qBtn-${qIdx}-${i}`);
+                if (btn) {
+                    btn.className = (i === optIdx)
+                        ? 'w-full text-left p-2 rounded-xl border-2 border-navyDark bg-brandYellow text-navyDark text-xs font-black flex items-center justify-between shadow-sm'
+                        : 'w-full text-left p-2 rounded-xl border border-navyDark bg-white hover:bg-yellow-50 text-xs font-bold text-navyDark flex items-center justify-between';
+                }
+            }
+        }
+
+        function submitExam(lvlId) {
+            const lvl = LEVELS_DB.find(l => l.id === lvlId);
+            const answered = userTestPicks.filter(a => a !== null).length;
+            if (answered < lvl.questions.length) {
+                showToast(`Please answer all ${lvl.questions.length} questions before submitting!`, "warning");
+                return;
+            }
+            advanceLessonStage(5);
+        }
+
+        function renderLevelVictory(container, lvl) {
+            if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+            APP_STATE.player.xp += 1000;
+            saveState();
+
+            container.innerHTML = `
+                <div class="text-center py-4 max-w-md mx-auto space-y-3">
+                    <div class="w-16 h-16 mx-auto bg-brandYellow rounded-2xl border-3 border-navyDark flex items-center justify-center text-3xl shadow">🏆</div>
+                    <h2 class="text-xl font-extrabold text-navyDark">LEVEL ${lvl.id} MASTERED!</h2>
+                    <p class="text-xs font-bold text-navyDark/80">Scroll down to explore your next adventure division!</p>
+                </div>
+            `;
+            document.getElementById('nextDivisionSection').classList.remove('hidden');
+        }
+
+        function launchNextLevelDirectly() {
+            if (APP_STATE.currentLevelId < LEVELS_DB.length) {
+                APP_STATE.currentLevelId += 1;
+                APP_STATE.currentLessonStage = 1;
+                document.getElementById('nextDivisionSection').classList.add('hidden');
+                renderCurrentLessonStage();
+            } else {
+                showToast("🎓 All 12 levels completed!", "success");
+            }
+        }
+
+        function openSandboxMode() {
+            advanceLessonStage(3);
+            document.getElementById('nextDivisionSection').classList.add('hidden');
+        }
+
+        function toggleTheoryMode(mode) {
+            APP_STATE.theoryMode = mode;
+            renderTheoryRepository();
+        }
+
+        function renderTheoryRepository() {
+            const container = document.getElementById('theoryAccordionList');
+            container.innerHTML = '';
+            LEVELS_DB.forEach(lvl => {
+                const el = document.createElement('div');
+                el.className = 'bg-white rounded-2xl border-2 border-navyDark p-3.5 space-y-2';
+                el.innerHTML = `
+                    <h4 class="font-extrabold text-navyDark text-sm">Level ${lvl.id}: ${lvl.title}</h4>
+                    <p class="text-xs text-navyDark font-bold">${APP_STATE.theoryMode === 'story' ? lvl.story : lvl.college}</p>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        // TESTS ARENA: DIFFERENT EXCLUSIVE QUESTIONS
+        function renderTestsGrid() {
+            const container = document.getElementById('testsGridContainer');
+            container.innerHTML = '';
+            ARENA_EXAMS_DB.forEach(exam => {
+                const el = document.createElement('div');
+                el.className = 'bg-white rounded-2xl border-2 border-navyDark p-3 shadow-sm flex flex-col justify-between';
+                el.innerHTML = `
+                    <div>
+                        <span class="text-2xl">🎯</span>
+                        <h4 class="font-extrabold text-navyDark text-xs mt-1">Lvl ${exam.lvlId}: ${exam.title}</h4>
+                        <p class="text-[10px] font-bold text-navyDark/60">${exam.questions.length} Exclusive Mock Questions</p>
+                    </div>
+                    <button onclick="launchArenaExam(${exam.lvlId})" class="mt-2 w-full py-1.5 bg-brandBlue text-white font-black text-xs rounded-xl border border-navyDark custom-btn">
+                        ENTER ARENA EXAM
+                    </button>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        let arenaPicks = [];
+        function launchArenaExam(lvlId) {
+            const exam = ARENA_EXAMS_DB.find(e => e.lvlId === lvlId);
+            if (!exam) return;
+            arenaPicks = new Array(exam.questions.length).fill(null);
+            const box = document.getElementById('testExamContainer');
+            box.classList.remove('hidden');
+            box.innerHTML = `
+                <div class="flex items-center justify-between border-b-2 border-slate-200 pb-2">
+                    <h3 class="text-base font-extrabold text-navyDark">${exam.title}</h3>
+                    <button onclick="document.getElementById('testExamContainer').classList.add('hidden')" class="text-xs font-bold text-brandRed">Close ✕</button>
+                </div>
+                <div class="space-y-3">
+                    ${exam.questions.map((q, idx) => `
+                        <div class="p-3 bg-skyBg/30 rounded-xl border border-navyDark space-y-1">
+                            <div class="font-bold text-xs text-navyDark">${idx + 1}. ${q.q}</div>
+                            ${q.options.map((opt, oIdx) => `
+                                <button onclick="pickArenaOpt(${idx}, ${oIdx})" id="arenaBtn-${idx}-${oIdx}" class="w-full text-left p-2 rounded-lg bg-white border border-navyDark text-xs font-bold flex justify-between">
+                                    <span>${opt}</span>
+                                    <span>${String.fromCharCode(65 + oIdx)}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+                <button onclick="submitArenaExam(${lvlId})" class="w-full py-2 bg-brandGreen rounded-xl border-2 border-navyDark font-black text-xs">
+                    GRADE EXAM
+                </button>
+            `;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function pickArenaOpt(qIdx, oIdx) {
+            playSfx('click');
+            arenaPicks[qIdx] = oIdx;
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`arenaBtn-${qIdx}-${i}`);
+                if (btn) btn.className = (i === oIdx) 
+                    ? "w-full text-left p-2 rounded-lg bg-brandYellow border-2 border-navyDark text-xs font-black flex justify-between"
+                    : "w-full text-left p-2 rounded-lg bg-white border border-navyDark text-xs font-bold flex justify-between";
+            }
+        }
+
+        function submitArenaExam(lvlId) {
+            const exam = ARENA_EXAMS_DB.find(e => e.lvlId === lvlId);
+            let score = 0;
+            exam.questions.forEach((q, i) => {
+                if (arenaPicks[i] === q.ans) score++;
+            });
+            playSfx('victory');
+            showToast(`Exam Graded: Scored ${score} of ${exam.questions.length}!`, "success");
+            document.getElementById('testExamContainer').classList.add('hidden');
+        }
+
+        function renderFriendsList() {
+            const container = document.getElementById('friendsLeaderboardList');
+            container.innerHTML = `
+                <div class="flex items-center justify-between p-2.5 rounded-xl border-2 border-brandYellow bg-yellow-50">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl">🤖</span>
+                        <div>
+                            <div class="font-extrabold text-xs text-navyDark">Student Alex (You)</div>
+                            <div class="text-[10px] text-navyDark/60">Level ${APP_STATE.player.completedLevels.length} Master</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-xs text-brandBlue">${APP_STATE.player.xp.toLocaleString()} XP</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 rounded-xl border border-navyDark bg-white">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl">👩‍💻</span>
+                        <div>
+                            <div class="font-extrabold text-xs text-navyDark">Priya S. (IIT Delhi)</div>
+                            <div class="text-[10px] text-navyDark/60">Level 11 Master</div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-black text-xs text-brandBlue">9,400 XP</span>
+                </div>
+            `;
+        }
+
+        function renderShopItems() {
+            const container = document.getElementById('shopItemsGrid');
+            document.getElementById('shopCoinBadge').textContent = APP_STATE.player.coins;
+            const items = [
+                { title: 'Archmage Hat', cost: 150, icon: '🧙‍♂️', desc: 'Golden stars on page hits' },
+                { title: 'Golden Monitor', cost: 300, icon: '👑', desc: 'Chassis skin for Master Computa' },
+                { title: 'Cyber Terminal', cost: 200, icon: '📟', desc: 'Phosphor green matrix theme' }
+            ];
+            container.innerHTML = items.map(item => `
+                <div class="bg-white rounded-2xl border-2 border-navyDark p-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">${item.icon}</span>
+                        <div>
+                            <h4 class="font-extrabold text-navyDark text-xs">${item.title}</h4>
+                            <p class="text-[10px] text-navyDark/60">${item.desc}</p>
+                        </div>
+                    </div>
+                    <button onclick="buyCosmetic(${item.cost}, '${item.title}')" class="px-3 py-1 bg-brandYellow rounded-xl border border-navyDark font-black text-xs custom-btn">
+                        🍫 ${item.cost}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function buyCosmetic(cost, title) {
+            if (APP_STATE.player.coins >= cost) {
+                APP_STATE.player.coins -= cost;
+                playSfx('hit');
+                saveState();
+                renderShopItems();
+                showToast(`Unlocked ${title}! ✨`, "success");
+            } else {
+                playSfx('fault');
+                showToast("Need more chocolates! Take more level tests.", "warning");
+            }
+        }
+
+        // OFFLINE AI TUTOR AGENT CONNECTOR
+        function toggleAITutorModal() {
+            playSfx('click');
+            document.getElementById('aiTutorModal').classList.toggle('hidden');
+        }
+
+        function askPromptChip(q) {
+            document.getElementById('tutorInput').value = q;
+            sendTutorQuestion();
+        }
+
+        async function sendTutorQuestion() {
+            const input = document.getElementById('tutorInput');
+            const q = input.value.trim();
+            if (!q) return;
+
+            appendChat('user', q);
+            input.value = '';
+
+            try {
+                const currLevel = LEVELS_DB.find(l => l.id === APP_STATE.currentLevelId);
+                const res = await fetch('/api/tutor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        question: q,
+                        currentLevelTitle: currLevel ? currLevel.title : 'General OS'
+                    })
+                });
+                const data = await res.json();
+                appendChat('assistant', data.reply);
+                speakMasterComputa(data.reply);
+            } catch (err) {
+                const fallback = "Master Computa says: Always ensure Turnaround Time = Completion - Arrival, and check your invariants!";
+                appendChat('assistant', fallback);
+                speakMasterComputa(fallback);
+            }
+        }
+
+        function appendChat(role, text) {
+            const stream = document.getElementById('tutorChatStream');
+            const row = document.createElement('div');
+            row.className = role === 'user' ? 'flex justify-end' : 'flex items-start space-x-2';
+            row.innerHTML = `<div class="bg-white border-2 border-navyDark p-2.5 rounded-2xl text-navyDark text-xs font-bold max-w-[85%]">${text}</div>`;
+            stream.appendChild(row);
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        function toggleVoiceSpeechInput() {
+            showToast("Voice microphone active... speak clearly!", "info");
+        }
+
+        // VIEW NAVIGATION ROUTER
+        function switchView(id) {
+            playSfx('click');
+            document.querySelectorAll('.view-screen').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(id);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-brandBlue');
+                btn.classList.add('text-navyDark/60');
+            });
+            const key = id.replace('view-', '');
+            const active = document.getElementById(`nav-${key}`);
+            if (active) {
+                active.classList.remove('text-navyDark/60');
+                active.classList.add('text-brandBlue');
+            }
+
+            if (id === 'view-map') renderMapNodes();
+            if (id === 'view-learn') renderTheoryRepository();
+            if (id === 'view-tests') renderTestsGrid();
+            if (id === 'view-friends') renderFriendsList();
+            if (id === 'view-shop') renderShopItems();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateTopBarStats() {
+            document.getElementById('playerNameDisplay').textContent = APP_STATE.player.name;
+            document.getElementById('xpCount').textContent = APP_STATE.player.xp.toLocaleString();
+            document.getElementById('coinCount').textContent = APP_STATE.player.coins;
+        }
+
+        function showToast(msg, type = "info") {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-12 left-1/2 -translate-x-1/2 z-50 bg-navyDark text-white px-4 py-2 rounded-2xl border-2 border-navyDark shadow-2xl font-black text-xs flex items-center space-x-2 animate-bounce`;
+            toast.innerHTML = `<span>💡</span><span>${msg}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2800);
+        }
+
+        window.onload = function () {
+            loadState();
+            updateTopBarStats();
+            renderMapNodes();
+        };
+    </script>
+</body>
+
+</html>
