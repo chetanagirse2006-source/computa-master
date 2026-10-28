@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/tutor",
+      "destination": "/api/tutor.js"
+    }
+  ]
+}
